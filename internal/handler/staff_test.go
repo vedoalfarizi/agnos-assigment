@@ -16,6 +16,7 @@ import (
 	"github.com/vedoalfarizi/hospital-api/internal/repository"
 	"github.com/vedoalfarizi/hospital-api/internal/service"
 	"github.com/vedoalfarizi/hospital-api/mocks"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // Helper to create service with mocked repositories
@@ -535,4 +536,416 @@ func TestCreateStaff_EmptyRequest(t *testing.T) {
 	if resp.Error == nil || resp.Error.Code != "VALIDATION_ERROR" {
 		t.Errorf("expected error code VALIDATION_ERROR")
 	}
+}
+
+// ========== LoginStaff Tests ==========
+
+// Helper to build login request body
+func buildLoginRequest(username, password string) []byte {
+	req := dto.StaffLoginRequest{
+		Username: username,
+		Password: password,
+	}
+	body, _ := json.Marshal(req)
+	return body
+}
+
+// TestLoginStaff_Success tests successful staff login
+func TestLoginStaff_Success(t *testing.T) {
+	mockStaffRepo := new(mocks.IStaffRepo)
+	mockHospitalRepo := new(mocks.IHospitalRepo)
+	logger := logrus.New()
+
+	// Setup expectations - staff found with correct password hash
+	password := "securepass123"
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		t.Fatalf("failed to hash password: %v", err)
+	}
+
+	mockStaffRepo.On("GetByUsername", "john_doe").
+		Return(&model.Staff{
+			ID:         1,
+			HospitalID: 1,
+			Username:   "john_doe",
+			Password:   string(hashedPassword), // pre-hashed
+		}, nil)
+
+	svc := newStaffServiceWithMocks(mockStaffRepo, mockHospitalRepo)
+	engine, _ := setupGinContext(t)
+	recorder := httptest.NewRecorder()
+
+	engine.POST("/staff/login", LoginStaff(svc, logger))
+
+	body := buildLoginRequest("john_doe", "securepass123")
+	req := httptest.NewRequest("POST", "/staff/login", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	engine.ServeHTTP(recorder, req)
+
+	if recorder.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d", recorder.Code)
+	}
+
+	var resp APIResponse
+	if err := json.Unmarshal(recorder.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("failed to unmarshal response: %v", err)
+	}
+
+	if !resp.Success {
+		t.Errorf("expected success=true, got false")
+	}
+
+	if resp.Data == nil {
+		t.Errorf("expected data to contain JWT token")
+	}
+
+	// Verify token structure in response
+	dataMap, ok := resp.Data.(map[string]interface{})
+	if !ok {
+		t.Fatalf("expected data to be map, got %T", resp.Data)
+	}
+
+	if token, exists := dataMap["access_token"]; !exists || token == "" {
+		t.Errorf("expected access_token in response")
+	}
+
+	if tokenType, exists := dataMap["token_type"]; !exists || tokenType != "Bearer" {
+		t.Errorf("expected token_type=Bearer")
+	}
+
+	if expiresIn, exists := dataMap["expires_in"]; !exists || expiresIn == nil {
+		t.Errorf("expected expires_in in response")
+	}
+
+	mockStaffRepo.AssertExpectations(t)
+}
+
+// TestLoginStaff_InvalidJSON tests malformed JSON request
+func TestLoginStaff_InvalidJSON(t *testing.T) {
+	mockStaffRepo := new(mocks.IStaffRepo)
+	mockHospitalRepo := new(mocks.IHospitalRepo)
+	logger := logrus.New()
+
+	svc := newStaffServiceWithMocks(mockStaffRepo, mockHospitalRepo)
+	engine, _ := setupGinContext(t)
+	recorder := httptest.NewRecorder()
+
+	engine.POST("/staff/login", LoginStaff(svc, logger))
+
+	req := httptest.NewRequest("POST", "/staff/login", bytes.NewReader([]byte(`{"invalid json`)))
+	req.Header.Set("Content-Type", "application/json")
+
+	engine.ServeHTTP(recorder, req)
+
+	if recorder.Code != http.StatusBadRequest {
+		t.Errorf("expected status 400, got %d", recorder.Code)
+	}
+
+	var resp APIResponse
+	if err := json.Unmarshal(recorder.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("failed to unmarshal response: %v", err)
+	}
+
+	if resp.Error == nil || resp.Error.Code != "INVALID_REQUEST" {
+		t.Errorf("expected error code INVALID_REQUEST")
+	}
+}
+
+// TestLoginStaff_MissingUsername tests validation error for missing username
+func TestLoginStaff_MissingUsername(t *testing.T) {
+	mockStaffRepo := new(mocks.IStaffRepo)
+	mockHospitalRepo := new(mocks.IHospitalRepo)
+	logger := logrus.New()
+
+	svc := newStaffServiceWithMocks(mockStaffRepo, mockHospitalRepo)
+	engine, _ := setupGinContext(t)
+	recorder := httptest.NewRecorder()
+
+	engine.POST("/staff/login", LoginStaff(svc, logger))
+
+	body := buildLoginRequest("", "securepass123")
+	req := httptest.NewRequest("POST", "/staff/login", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	engine.ServeHTTP(recorder, req)
+
+	if recorder.Code != http.StatusBadRequest {
+		t.Errorf("expected status 400, got %d", recorder.Code)
+	}
+
+	var resp APIResponse
+	if err := json.Unmarshal(recorder.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("failed to unmarshal response: %v", err)
+	}
+
+	if resp.Error == nil || resp.Error.Code != "VALIDATION_ERROR" {
+		t.Errorf("expected error code VALIDATION_ERROR")
+	}
+}
+
+// TestLoginStaff_InvalidUsernameLength tests validation error for username too short
+func TestLoginStaff_InvalidUsernameLength(t *testing.T) {
+	mockStaffRepo := new(mocks.IStaffRepo)
+	mockHospitalRepo := new(mocks.IHospitalRepo)
+	logger := logrus.New()
+
+	svc := newStaffServiceWithMocks(mockStaffRepo, mockHospitalRepo)
+	engine, _ := setupGinContext(t)
+	recorder := httptest.NewRecorder()
+
+	engine.POST("/staff/login", LoginStaff(svc, logger))
+
+	// Username too short (min=3)
+	body := buildLoginRequest("ab", "securepass123")
+	req := httptest.NewRequest("POST", "/staff/login", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	engine.ServeHTTP(recorder, req)
+
+	if recorder.Code != http.StatusBadRequest {
+		t.Errorf("expected status 400, got %d", recorder.Code)
+	}
+
+	var resp APIResponse
+	if err := json.Unmarshal(recorder.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("failed to unmarshal response: %v", err)
+	}
+
+	if resp.Error == nil || resp.Error.Code != "VALIDATION_ERROR" {
+		t.Errorf("expected error code VALIDATION_ERROR")
+	}
+}
+
+// TestLoginStaff_MissingPassword tests validation error for missing password
+func TestLoginStaff_MissingPassword(t *testing.T) {
+	mockStaffRepo := new(mocks.IStaffRepo)
+	mockHospitalRepo := new(mocks.IHospitalRepo)
+	logger := logrus.New()
+
+	svc := newStaffServiceWithMocks(mockStaffRepo, mockHospitalRepo)
+	engine, _ := setupGinContext(t)
+	recorder := httptest.NewRecorder()
+
+	engine.POST("/staff/login", LoginStaff(svc, logger))
+
+	body := buildLoginRequest("john_doe", "")
+	req := httptest.NewRequest("POST", "/staff/login", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	engine.ServeHTTP(recorder, req)
+
+	if recorder.Code != http.StatusBadRequest {
+		t.Errorf("expected status 400, got %d", recorder.Code)
+	}
+
+	var resp APIResponse
+	if err := json.Unmarshal(recorder.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("failed to unmarshal response: %v", err)
+	}
+
+	if resp.Error == nil || resp.Error.Code != "VALIDATION_ERROR" {
+		t.Errorf("expected error code VALIDATION_ERROR")
+	}
+}
+
+// TestLoginStaff_InvalidPasswordLength tests validation error for password too short
+func TestLoginStaff_InvalidPasswordLength(t *testing.T) {
+	mockStaffRepo := new(mocks.IStaffRepo)
+	mockHospitalRepo := new(mocks.IHospitalRepo)
+	logger := logrus.New()
+
+	svc := newStaffServiceWithMocks(mockStaffRepo, mockHospitalRepo)
+	engine, _ := setupGinContext(t)
+	recorder := httptest.NewRecorder()
+
+	engine.POST("/staff/login", LoginStaff(svc, logger))
+
+	// Password too short (min=8)
+	body := buildLoginRequest("john_doe", "short01")
+	req := httptest.NewRequest("POST", "/staff/login", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	engine.ServeHTTP(recorder, req)
+
+	if recorder.Code != http.StatusBadRequest {
+		t.Errorf("expected status 400, got %d", recorder.Code)
+	}
+
+	var resp APIResponse
+	if err := json.Unmarshal(recorder.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("failed to unmarshal response: %v", err)
+	}
+
+	if resp.Error == nil || resp.Error.Code != "VALIDATION_ERROR" {
+		t.Errorf("expected error code VALIDATION_ERROR")
+	}
+}
+
+// TestLoginStaff_EmptyRequest tests validation error for all empty fields
+func TestLoginStaff_EmptyRequest(t *testing.T) {
+	mockStaffRepo := new(mocks.IStaffRepo)
+	mockHospitalRepo := new(mocks.IHospitalRepo)
+	logger := logrus.New()
+
+	svc := newStaffServiceWithMocks(mockStaffRepo, mockHospitalRepo)
+	engine, _ := setupGinContext(t)
+	recorder := httptest.NewRecorder()
+
+	engine.POST("/staff/login", LoginStaff(svc, logger))
+
+	req := httptest.NewRequest("POST", "/staff/login", bytes.NewReader([]byte(`{}`)))
+	req.Header.Set("Content-Type", "application/json")
+
+	engine.ServeHTTP(recorder, req)
+
+	if recorder.Code != http.StatusBadRequest {
+		t.Errorf("expected status 400, got %d", recorder.Code)
+	}
+
+	var resp APIResponse
+	if err := json.Unmarshal(recorder.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("failed to unmarshal response: %v", err)
+	}
+
+	if resp.Error == nil || resp.Error.Code != "VALIDATION_ERROR" {
+		t.Errorf("expected error code VALIDATION_ERROR")
+	}
+}
+
+// TestLoginStaff_UserNotFound tests invalid credentials error when user doesn't exist
+func TestLoginStaff_UserNotFound(t *testing.T) {
+	mockStaffRepo := new(mocks.IStaffRepo)
+	mockHospitalRepo := new(mocks.IHospitalRepo)
+	logger := logrus.New()
+
+	// Setup expectations - user not found
+	mockStaffRepo.On("GetByUsername", "nonexistent").
+		Return(nil, repository.ErrNotFound)
+
+	svc := newStaffServiceWithMocks(mockStaffRepo, mockHospitalRepo)
+	engine, _ := setupGinContext(t)
+	recorder := httptest.NewRecorder()
+
+	engine.POST("/staff/login", LoginStaff(svc, logger))
+
+	body := buildLoginRequest("nonexistent", "securepass123")
+	req := httptest.NewRequest("POST", "/staff/login", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	engine.ServeHTTP(recorder, req)
+
+	// Should return 401 for invalid credentials
+	if recorder.Code != http.StatusUnauthorized {
+		t.Errorf("expected status 401, got %d", recorder.Code)
+	}
+
+	var resp APIResponse
+	if err := json.Unmarshal(recorder.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("failed to unmarshal response: %v", err)
+	}
+
+	if resp.Success {
+		t.Errorf("expected success=false, got true")
+	}
+
+	if resp.Error == nil || resp.Error.Code != "UNAUTHORIZED" {
+		t.Errorf("expected error code UNAUTHORIZED, got %v", resp.Error)
+	}
+
+	mockStaffRepo.AssertExpectations(t)
+}
+
+// TestLoginStaff_InvalidPassword tests invalid credentials error for wrong password
+func TestLoginStaff_InvalidPassword(t *testing.T) {
+	mockStaffRepo := new(mocks.IStaffRepo)
+	mockHospitalRepo := new(mocks.IHospitalRepo)
+	logger := logrus.New()
+
+	// Setup expectations - user found but password doesn't match
+	password := "securepass123"
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		t.Fatalf("failed to hash password: %v", err)
+	}
+
+	mockStaffRepo.On("GetByUsername", "john_doe").
+		Return(&model.Staff{
+			ID:         1,
+			HospitalID: 1,
+			Username:   "john_doe",
+			Password:   string(hashedPassword),
+		}, nil)
+
+	svc := newStaffServiceWithMocks(mockStaffRepo, mockHospitalRepo)
+	engine, _ := setupGinContext(t)
+	recorder := httptest.NewRecorder()
+
+	engine.POST("/staff/login", LoginStaff(svc, logger))
+
+	// Wrong password
+	body := buildLoginRequest("john_doe", "wrongpassword1")
+	req := httptest.NewRequest("POST", "/staff/login", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	engine.ServeHTTP(recorder, req)
+
+	// Should return 401 for invalid credentials
+	if recorder.Code != http.StatusUnauthorized {
+		t.Errorf("expected status 401, got %d", recorder.Code)
+	}
+
+	var resp APIResponse
+	if err := json.Unmarshal(recorder.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("failed to unmarshal response: %v", err)
+	}
+
+	if resp.Error == nil || resp.Error.Code != "UNAUTHORIZED" {
+		t.Errorf("expected error code UNAUTHORIZED")
+	}
+
+	mockStaffRepo.AssertExpectations(t)
+}
+
+// TestLoginStaff_DatabaseError tests service error for database failures
+func TestLoginStaff_DatabaseError(t *testing.T) {
+	mockStaffRepo := new(mocks.IStaffRepo)
+	mockHospitalRepo := new(mocks.IHospitalRepo)
+	logger := logrus.New()
+
+	// Setup expectations - database error
+	mockStaffRepo.On("GetByUsername", "john_doe").
+		Return(nil, errors.New("database connection error"))
+
+	svc := newStaffServiceWithMocks(mockStaffRepo, mockHospitalRepo)
+	engine, _ := setupGinContext(t)
+	recorder := httptest.NewRecorder()
+
+	engine.POST("/staff/login", LoginStaff(svc, logger))
+
+	body := buildLoginRequest("john_doe", "securepass123")
+	req := httptest.NewRequest("POST", "/staff/login", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	engine.ServeHTTP(recorder, req)
+
+	// Should return 500
+	if recorder.Code != http.StatusInternalServerError {
+		t.Errorf("expected status 500, got %d", recorder.Code)
+	}
+
+	var resp APIResponse
+	if err := json.Unmarshal(recorder.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("failed to unmarshal response: %v", err)
+	}
+
+	if resp.Success {
+		t.Errorf("expected success=false, got true")
+	}
+
+	if resp.Error == nil || resp.Error.Code != "INTERNAL_ERROR" {
+		t.Errorf("expected error code INTERNAL_ERROR")
+	}
+
+	mockStaffRepo.AssertExpectations(t)
 }
