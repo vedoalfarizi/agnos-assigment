@@ -64,20 +64,3 @@ func (r *StaffRepo) GetByUsername(username string) (*model.Staff, error) {
 	}
 	return &s, nil
 }
-
-// TODO::move to hospital repository
-// HospitalExists checks if a hospital with the given ID exists, returning ErrNotFound when missing.
-func (r *StaffRepo) HospitalExists(hospitalID int) error {
-	const query = `SELECT 1 FROM hospital WHERE id = $1`
-
-	var exists int
-	err := r.db.QueryRow(query, hospitalID).Scan(&exists)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return ErrNotFound
-		}
-		return err
-	}
-
-	return nil
-}

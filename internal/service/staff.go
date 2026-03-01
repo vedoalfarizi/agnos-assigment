@@ -18,21 +18,22 @@ import (
 
 type StaffService struct {
 	repo           *repository.StaffRepo
+	hospitalRepo   *repository.HospitalRepo
 	jwtSecret      []byte
 	expirationDays int
 }
 
-// NewStaffService builds a StaffService with the provided repository and
+// NewStaffService builds a StaffService with the provided repositories and
 // authentication configuration (JWT secret and expiration days).
-func NewStaffService(r *repository.StaffRepo, jwtSecret []byte, expirationDays int) *StaffService {
-	return &StaffService{repo: r, jwtSecret: jwtSecret, expirationDays: expirationDays}
+func NewStaffService(r *repository.StaffRepo, h *repository.HospitalRepo, jwtSecret []byte, expirationDays int) *StaffService {
+	return &StaffService{repo: r, hospitalRepo: h, jwtSecret: jwtSecret, expirationDays: expirationDays}
 }
 
 // CreateStaff validates the request, checks hospital existence, hashes the password,
 // and creates a new staff member. Returns a service-level response DTO.
 func (s *StaffService) CreateStaff(ctx context.Context, req *dto.StaffCreateRequest) (*dto.StaffCreateResponse, error) {
-	// Verify hospital exists via repository; repository returns ErrNotFound if missing
-	err := s.repo.HospitalExists(req.HospitalID)
+	// Verify hospital exists via HospitalRepo; returns ErrNotFound if missing
+	err := s.hospitalRepo.HospitalExists(req.HospitalID)
 	if err != nil {
 		return nil, err
 	}

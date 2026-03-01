@@ -27,8 +27,9 @@ func New(log *logger.Logger, cfg *config.Config, db *sqlx.DB) *gin.Engine {
 
 	// setup staff components (registration + login)
 	staffRepo := repository.NewStaffRepo(db)
+	hospitalRepo := repository.NewHospitalRepo(db)
 	// pass JWT secret and expiration from config
-	staffSvc := service.NewStaffService(staffRepo, []byte(cfg.JWTSecret), cfg.JWTExpirationDays)
+	staffSvc := service.NewStaffService(staffRepo, hospitalRepo, []byte(cfg.JWTSecret), cfg.JWTExpirationDays)
 
 	// setup patient components (search)
 	patientRepo := repository.NewPatientRepo(db)
@@ -50,12 +51,6 @@ func New(log *logger.Logger, cfg *config.Config, db *sqlx.DB) *gin.Engine {
 
 	// Protected patient endpoints (require auth)
 	r.GET("/patient/search", authMiddleware, handler.SearchPatients(patientSvc, log.Logger))
-
-	// example versioned endpoint (could be removed later)
-	v1 := r.Group("/api/v1")
-	{
-		v1.GET("/status", handler.HealthCheck(healthSvc, log.Logger))
-	}
 
 	return r
 }
