@@ -6,6 +6,8 @@ import (
 	"github.com/vedoalfarizi/hospital-api/internal/config"
 	"github.com/vedoalfarizi/hospital-api/internal/handler"
 	"github.com/vedoalfarizi/hospital-api/internal/logger"
+	"github.com/vedoalfarizi/hospital-api/internal/repository"
+	"github.com/vedoalfarizi/hospital-api/internal/service"
 )
 
 func New(log *logger.Logger, cfg *config.Config) *gin.Engine {
@@ -17,9 +19,17 @@ func New(log *logger.Logger, cfg *config.Config) *gin.Engine {
 
 	r := gin.Default()
 
+	// setup health check components
+	healthRepo := repository.NewHealthRepo()
+	healthSvc := service.NewHealthService(healthRepo)
+
+	// public health endpoint
+	r.GET("/health", handler.HealthCheck(healthSvc, log.Logger))
+
+	// example versioned endpoint (could be removed later)
 	v1 := r.Group("/api/v1")
 	{
-		v1.GET("/status", handler.HealthCheck)
+		v1.GET("/status", handler.HealthCheck(healthSvc, log.Logger))
 	}
 
 	return r

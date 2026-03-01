@@ -13,6 +13,25 @@ Intended audience: Go backend engineers implementing handlers, services, reposit
 
 
 ## 2. Project Layout (canonical)
+
+## Health Check Endpoint
+
+A simple unauthenticated endpoint exposed at `/health` (and optionally versioned paths like `/api/v1/status`).
+The handler should return both overall service status and component statuses for easier operational checks.
+Example response structure:
+
+```json
+{
+  "status": "healthy",
+  "server": "up",
+  "database": "up"
+}
+```
+
+In case of database connectivity issues the HTTP status code should be 500 and the response `status` field set to `unhealthy`; the failure should be logged at error level.
+
+The handler constructs responses via `internal/handler/HealthCheckResponse` and leverages the service layer (not direct DB calls).
+
 - `cmd/` — application entrypoint(s)
 - `internal/config` — env parsing and app config
 - `internal/database/postgre` — DB connect, migrations helper
