@@ -31,11 +31,35 @@ Intended audience: Go backend engineers implementing handlers, services, reposit
 ## 3. Environment variables (.env conventions)
 Use a `.env` file in development. Canonical environment variables:
 
-- `DATABASE_DSN` — Postgres DSN, example: `postgres://user:pass@localhost:5432/hospital?sslmode=disable`
-- `JWT_SECRET` — application JWT HMAC secret (base64 or raw string)
-- `SERVER_PORT` — service port, e.g. `8080`
-- `GIN_MODE` — `release` or `debug` (`release` in prod)
-- `MIGRATE_AUTO` — `true` or `false` (dev-only, default `false`)
+**Application:**
+- `APP_NAME` — Application name (default: `hospital-api`)
+- `APP_ENV` — Environment mode: `development` or `production` (default: `development`)
+- `APP_PORT` — Server port (default: `8080`)
+
+**Database (PostgreSQL):**
+- `DB_HOST` — PostgreSQL host (default: `localhost`)
+- `DB_PORT` — PostgreSQL port (default: `5432`)
+- `DB_SSLMODE` — SSL mode (default: `disable`)
+- `DB_MAX_OPEN_CONNS` — Max open connections (default: `25`)
+- `DB_MAX_IDLE_CONNS` — Max idle connections (default: `10`)
+- `DB_CONN_MAX_LIFETIME` — Connection max lifetime (default: `5m`)
+- `POSTGRES_USER` — PostgreSQL username (default: `postgres`)
+- `POSTGRES_PASSWORD` — PostgreSQL password
+- `POSTGRES_DB` — PostgreSQL database name (default: `hospital_db`)
+- `DATABASE_DSN` — Full PostgreSQL DSN for migrations, example: `postgres://user:pass@localhost:5432/hospital?sslmode=disable`
+
+**JWT:**
+- `JWT_SECRET` — JWT HMAC secret (base64 or raw string, required)
+- `JWT_EXPIRATION_DAYS` — JWT token expiration in days (default: `30`)
+
+**Logging:**
+- `LOG_LEVEL` — Log level: `debug`, `info`, `warn`, `error` (default: `info`)
+- `LOG_FORMAT` — Log format: `json` or `text` (default: `json`)
+
+**Rate Limiting:**
+- `RATE_LIMIT_ENABLED` — Enable rate limiting (default: `true`)
+- `RATE_LIMIT_REQUESTS` — Requests per window (default: `100`)
+- `RATE_LIMIT_WINDOW_SECONDS` — Rate limit window in seconds (default: `60`)
 
 
 ## 4. Database — Migrations & Schema
