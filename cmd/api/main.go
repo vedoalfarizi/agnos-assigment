@@ -30,7 +30,8 @@ func main() {
 		log.Fatalf("database connection failed: %v", err)
 	}
 
-	r := router.New(log, cfg)
+	db := postgre.GetDB()
+	r := router.New(log, cfg, db)
 	addr := fmt.Sprintf(":%d", cfg.ServerPort)
 
 	log.Infof("Starting server on %s", addr)

@@ -3,25 +3,25 @@ package repository
 import (
 	"errors"
 
-	"github.com/vedoalfarizi/hospital-api/internal/database/postgre"
+	"github.com/jmoiron/sqlx"
 )
 
 // HealthRepo provides low-level access to database health checks.
 // It exists to separate persistence concerns from higher layers.
 
-type HealthRepo struct{}
-
-// NewHealthRepo constructs a HealthRepo instance.
-func NewHealthRepo() *HealthRepo {
-	return &HealthRepo{}
+type HealthRepo struct {
+	db *sqlx.DB
 }
 
-// Ping performs a simple ping against the shared *sqlx.DB. Returns an error
-// if the connection pool is nil or the ping fails.
+// NewHealthRepo constructs a HealthRepo with an explicit database connection.
+func NewHealthRepo(db *sqlx.DB) *HealthRepo {
+	return &HealthRepo{db: db}
+}
+
+// Ping performs a simple ping against the provided *sqlx.DB.
 func (r *HealthRepo) Ping() error {
-	db := postgre.GetDB()
-	if db == nil {
+	if r.db == nil {
 		return errors.New("database not initialized")
 	}
-	return db.Ping()
+	return r.db.Ping()
 }
