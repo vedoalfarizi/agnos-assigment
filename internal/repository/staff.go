@@ -45,6 +45,26 @@ func (r *StaffRepo) CreateStaff(staff *model.Staff) (*model.Staff, error) {
 	return &result, nil
 }
 
+// GetByUsername retrieves a staff record by username. It returns ErrNotFound
+// if no such user exists.
+func (r *StaffRepo) GetByUsername(username string) (*model.Staff, error) {
+	const query = `
+		SELECT id, hospital_id, username, password, created_at, updated_at
+		FROM staff
+		WHERE username = $1
+	`
+
+	var s model.Staff
+	err := r.db.Get(&s, query, username)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, ErrNotFound
+		}
+		return nil, err
+	}
+	return &s, nil
+}
+
 // TODO::move to hospital repository
 // HospitalExists checks if a hospital with the given ID exists, returning ErrNotFound when missing.
 func (r *StaffRepo) HospitalExists(hospitalID int) error {

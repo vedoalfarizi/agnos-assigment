@@ -2,8 +2,11 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"time"
 
+	"github.com/golang-jwt/jwt"
 	"github.com/vedoalfarizi/hospital-api/internal/dto"
 	"github.com/vedoalfarizi/hospital-api/internal/model"
 	"github.com/vedoalfarizi/hospital-api/internal/repository"
@@ -14,12 +17,15 @@ import (
 // password hashing, and database operations.
 
 type StaffService struct {
-	repo *repository.StaffRepo
+	repo           *repository.StaffRepo
+	jwtSecret      []byte
+	expirationDays int
 }
 
-// NewStaffService builds a StaffService with the provided repository.
-func NewStaffService(r *repository.StaffRepo) *StaffService {
-	return &StaffService{repo: r}
+// NewStaffService builds a StaffService with the provided repository and
+// authentication configuration (JWT secret and expiration days).
+func NewStaffService(r *repository.StaffRepo, jwtSecret []byte, expirationDays int) *StaffService {
+	return &StaffService{repo: r, jwtSecret: jwtSecret, expirationDays: expirationDays}
 }
 
 // CreateStaff validates the request, checks hospital existence, hashes the password,
@@ -55,5 +61,46 @@ func (s *StaffService) CreateStaff(ctx context.Context, req *dto.StaffCreateRequ
 		ID:         createdStaff.ID,
 		Username:   createdStaff.Username,
 		HospitalID: createdStaff.HospitalID,
+	}, nil
+}
+
+// ErrInvalidCredentials indicates the provided username/password pair was wrong.
+var ErrInvalidCredentials = errors.New("invalid credentials")
+
+// Login authenticates a staff member and returns a JWT access token if
+// credentials are valid. It returns ErrInvalidCredentials for authentication
+// failures, or other errors for unexpected issues.
+func (s *StaffService) Login(ctx context.Context, req *dto.StaffLoginRequest) (*dto.StaffLoginResponse, error) {
+	// lookup user by username
+	staff, err := s.repo.GetByUsername(req.Username)
+	if err != nil {
+		if err == repository.ErrNotFound {
+			return nil, ErrInvalidCredentials
+		}
+		return nil, err
+	}
+
+	// compare password
+	if bcrypt.CompareHashAndPassword([]byte(staff.Password), []byte(req.Password)) != nil {
+		return nil, ErrInvalidCredentials
+	}
+
+	// build token
+	expiresAt := time.Now().Add(time.Duration(s.expirationDays) * 24 * time.Hour).Unix()
+	claims := jwt.MapClaims{
+		"staff_id":    staff.ID,
+		"hospital_id": staff.HospitalID,
+		"exp":         expiresAt,
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString(s.jwtSecret)
+	if err != nil {
+		return nil, fmt.Errorf("failed to sign token: %w", err)
+	}
+
+	return &dto.StaffLoginResponse{
+		AccessToken: tokenString,
+		TokenType:   "Bearer",
+		ExpiresIn:   expiresAt - time.Now().Unix(),
 	}, nil
 }

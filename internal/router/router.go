@@ -24,15 +24,18 @@ func New(log *logger.Logger, cfg *config.Config, db *sqlx.DB) *gin.Engine {
 	healthRepo := repository.NewHealthRepo(db)
 	healthSvc := service.NewHealthService(healthRepo)
 
-	// setup staff components
+	// setup staff components (registration + login)
 	staffRepo := repository.NewStaffRepo(db)
-	staffSvc := service.NewStaffService(staffRepo)
+	// pass JWT secret and expiration from config
+	staffSvc := service.NewStaffService(staffRepo, []byte(cfg.JWTSecret), cfg.JWTExpirationDays)
 
 	// public health endpoint
 	r.GET("/health", handler.HealthCheck(healthSvc, log.Logger))
 
 	// staff create endpoint (public)
 	r.POST("/staff/create", handler.CreateStaff(staffSvc, log.Logger))
+	// staff login endpoint (public)
+	r.POST("/staff/login", handler.LoginStaff(staffSvc, log.Logger))
 
 	// example versioned endpoint (could be removed later)
 	v1 := r.Group("/api/v1")

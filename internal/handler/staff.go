@@ -57,3 +57,39 @@ func CreateStaff(svc *service.StaffService, log *logrus.Logger) gin.HandlerFunc 
 		})
 	}
 }
+
+// LoginStaff returns a Gin handler for staff authentication. It validates the
+// credentials and returns a JWT token on success.
+func LoginStaff(svc *service.StaffService, log *logrus.Logger) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req dto.StaffLoginRequest
+
+		if err := c.ShouldBindJSON(&req); err != nil {
+			log.Warnf("invalid login request: %v", err)
+			Error(c, 400, "INVALID_REQUEST", "Invalid request format")
+			return
+		}
+
+		validate := validator.New()
+		if err := validate.Struct(&req); err != nil {
+			log.Warnf("validation failed: %v", err)
+			Error(c, 400, "VALIDATION_ERROR", "Validation failed: "+err.Error())
+			return
+		}
+
+		resp, err := svc.Login(c.Request.Context(), &req)
+		if err != nil {
+			if err == service.ErrInvalidCredentials {
+				log.Warnf("invalid credentials for user %s", req.Username)
+				Error(c, 401, "UNAUTHORIZED", "Invalid username or password")
+				return
+			}
+			// other errors bubble up
+			log.Errorf("login failed: %v", err)
+			Error(c, 500, "INTERNAL_ERROR", "Login failed")
+			return
+		}
+
+		Success(c, resp)
+	}
+}
