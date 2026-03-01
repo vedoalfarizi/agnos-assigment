@@ -21,6 +21,16 @@ services:
     networks:
       - hospital-network
 
+  migrate:
+    image: migrate/migrate
+    depends_on:
+      - postgres
+    entrypoint: ["migrate"]
+    networks:
+      - hospital-network
+    volumes:
+      - ./migrations:/migrations
+
 networks:
   hospital-network:
     driver: bridge

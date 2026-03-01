@@ -28,22 +28,23 @@ run: build
 
 migrate-up:
 	@echo "Running migrations up..."
-	@if command -v migrate >/dev/null 2>&1; then \
-		migrate -path ./migrations -database "$(DATABASE_DSN)" up; \
+	@# load environment variables and run migration in same shell
+	@set -a; [ -f .env ] && . .env; set +a; \
+	if command -v migrate >/dev/null 2>&1; then \
+		migrate -path ./migrations -database "$$DATABASE_DSN" up; \
 	else \
 		echo "golang-migrate not found. Using Docker..."; \
-		docker run --rm -v "$$(pwd)/migrations":/migrations --network host migrate/migrate \
-		  -path=/migrations -database "$(DATABASE_DSN)" up; \
+		docker-compose run --rm migrate -path=/migrations -database "$$DATABASE_DSN" up; \
 	fi
 
 migrate-down:
 	@echo "Running migrations down..."
-	@if command -v migrate >/dev/null 2>&1; then \
-		migrate -path ./migrations -database "$(DATABASE_DSN)" down; \
+	@set -a; [ -f .env ] && . .env; set +a; \
+	if command -v migrate >/dev/null 2>&1; then \
+		migrate -path ./migrations -database "$$DATABASE_DSN" down; \
 	else \
 		echo "golang-migrate not found. Using Docker..."; \
-		docker run --rm -v "$$(pwd)/migrations":/migrations --network host migrate/migrate \
-		  -path=/migrations -database "$(DATABASE_DSN)" down; \
+		docker-compose run --rm migrate -path=/migrations -database "$$DATABASE_DSN" down; \
 	fi
 
 clean:
