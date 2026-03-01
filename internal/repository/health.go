@@ -6,6 +6,12 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+// IHealthRepo abstracts health-related data access for testability.
+type IHealthRepo interface {
+	// Ping performs a simple ping against the provided *sqlx.DB.
+	Ping() error
+}
+
 // HealthRepo provides low-level access to database health checks.
 // It exists to separate persistence concerns from higher layers.
 

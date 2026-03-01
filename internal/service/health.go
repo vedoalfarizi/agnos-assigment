@@ -9,11 +9,11 @@ import (
 // enhancements (e.g., multi-check, caching, metrics).
 
 type HealthService struct {
-	repo *repository.HealthRepo
+	repo repository.IHealthRepo
 }
 
 // NewHealthService builds a HealthService with the provided repository.
-func NewHealthService(r *repository.HealthRepo) *HealthService {
+func NewHealthService(r repository.IHealthRepo) *HealthService {
 	return &HealthService{repo: r}
 }
 

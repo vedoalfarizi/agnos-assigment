@@ -7,11 +7,11 @@ import (
 )
 
 type PatientService struct {
-	repo *repository.PatientRepo
+	repo repository.IPatientRepo
 }
 
 // NewPatientService constructs a PatientService instance.
-func NewPatientService(repo *repository.PatientRepo) *PatientService {
+func NewPatientService(repo repository.IPatientRepo) *PatientService {
 	return &PatientService{repo: repo}
 }
 

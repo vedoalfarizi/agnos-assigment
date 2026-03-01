@@ -17,15 +17,15 @@ import (
 // password hashing, and database operations.
 
 type StaffService struct {
-	repo           *repository.StaffRepo
-	hospitalRepo   *repository.HospitalRepo
+	repo           repository.IStaffRepo
+	hospitalRepo   repository.IHospitalRepo
 	jwtSecret      []byte
 	expirationDays int
 }
 
 // NewStaffService builds a StaffService with the provided repositories and
 // authentication configuration (JWT secret and expiration days).
-func NewStaffService(r *repository.StaffRepo, h *repository.HospitalRepo, jwtSecret []byte, expirationDays int) *StaffService {
+func NewStaffService(r repository.IStaffRepo, h repository.IHospitalRepo, jwtSecret []byte, expirationDays int) *StaffService {
 	return &StaffService{repo: r, hospitalRepo: h, jwtSecret: jwtSecret, expirationDays: expirationDays}
 }
 

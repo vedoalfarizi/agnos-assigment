@@ -9,6 +9,15 @@ import (
 	"github.com/vedoalfarizi/hospital-api/internal/model"
 )
 
+// IPatientRepo abstracts patient-related data access for testability.
+type IPatientRepo interface {
+	// GetPatientByID searches for a single patient by national_id or passport_id across all hospitals.
+	GetPatientByID(id string) (*model.Patient, error)
+
+	// SearchPatients dynamically builds a query based on provided search criteria.
+	SearchPatients(hospitalID int, query dto.PatientSearchRequest) ([]model.Patient, error)
+}
+
 type PatientRepo struct {
 	db *sqlx.DB
 }

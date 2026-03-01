@@ -9,6 +9,15 @@ import (
 	"github.com/vedoalfarizi/hospital-api/internal/model"
 )
 
+// IStaffRepo abstracts staff-related data access for testability.
+type IStaffRepo interface {
+	// CreateStaff inserts a new staff member and returns the created staff with ID populated.
+	CreateStaff(staff *model.Staff) (*model.Staff, error)
+
+	// GetByUsername retrieves a staff record by username. It returns ErrNotFound if no such user exists.
+	GetByUsername(username string) (*model.Staff, error)
+}
+
 // Domain-level errors
 var (
 	ErrDuplicate = errors.New("duplicate entry")

@@ -6,6 +6,12 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+// IHospitalRepo abstracts hospital-related data access for testability.
+type IHospitalRepo interface {
+	// HospitalExists checks if a hospital with the given ID exists, returning ErrNotFound when missing.
+	HospitalExists(hospitalID int) error
+}
+
 // HospitalRepo provides access to hospital-related queries.
 type HospitalRepo struct {
 	db *sqlx.DB
