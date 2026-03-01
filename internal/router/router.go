@@ -45,6 +45,9 @@ func New(log *logger.Logger, cfg *config.Config, db *sqlx.DB) *gin.Engine {
 	// staff login endpoint (public)
 	r.POST("/staff/login", handler.LoginStaff(staffSvc, log.Logger))
 
+	// Public patient search by ID endpoint
+	r.GET("/patient/search/:id", handler.SearchPatientByID(patientSvc, log.Logger))
+
 	// Protected patient endpoints (require auth)
 	r.GET("/patient/search", authMiddleware, handler.SearchPatients(patientSvc, log.Logger))
 

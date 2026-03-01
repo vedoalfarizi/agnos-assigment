@@ -17,6 +17,7 @@ type Patient struct {
 	PhoneNumber  *string    `db:"phone_number"`
 	Email        *string    `db:"email"`
 	Gender       *string    `db:"gender"`
+	HospitalName *string    `db:"hospital_name"`
 	CreatedAt    time.Time  `db:"created_at"`
 	UpdatedAt    time.Time  `db:"updated_at"`
 }

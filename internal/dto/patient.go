@@ -31,3 +31,20 @@ type PatientSearchResponse struct {
 	Email        *string    `json:"email"`
 	DateOfBirth  *time.Time `json:"date_of_birth"`
 }
+
+// PatientSearchByIDResponse contains patient info for single patient lookup (public endpoint).
+type PatientSearchByIDResponse struct {
+	FirstNameTh  *string `json:"first_name_th"`
+	MiddleNameTh *string `json:"middle_name_th"`
+	LastNameTh   *string `json:"last_name_th"`
+	FirstNameEn  *string `json:"first_name_en"`
+	MiddleNameEn *string `json:"middle_name_en"`
+	LastNameEn   *string `json:"last_name_en"`
+	DateOfBirth  *string `json:"date_of_birth"` // YYYY-MM-DD format
+	PatientHN    *string `json:"patient_hn"`
+	NationalID   *string `json:"national_id"`
+	PassportID   *string `json:"passport_id"`
+	PhoneNumber  *string `json:"phone_number"`
+	Email        *string `json:"email"`
+	Gender       *string `json:"gender"`
+}

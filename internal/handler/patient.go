@@ -7,6 +7,39 @@ import (
 	"github.com/vedoalfarizi/hospital-api/internal/service"
 )
 
+// SearchPatientByID returns a Gin handler that searches for a single patient by national_id or passport_id.
+// This is a public endpoint (no authentication required).
+// Returns 404 if patient not found.
+func SearchPatientByID(svc *service.PatientService, log *logrus.Logger) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// Extract id from URL path
+		id := c.Param("id")
+		if id == "" {
+			log.Warnf("empty id parameter")
+			Error(c, 400, "INVALID_REQUEST", "ID parameter is required")
+			return
+		}
+
+		// Call service to get patient
+		patient, err := svc.GetPatientByID(id)
+		if err != nil {
+			log.Errorf("failed to get patient: %v", err)
+			Error(c, 500, "INTERNAL_ERROR", "Failed to retrieve patient")
+			return
+		}
+
+		// Return 404 if not found
+		if patient == nil {
+			log.Debugf("patient not found with id: %s", id)
+			Error(c, 404, "PATIENT_NOT_FOUND", "Patient not found")
+			return
+		}
+
+		// Return patient data
+		Success(c, patient)
+	}
+}
+
 // SearchPatients returns a Gin handler that searches for patients within a hospital.
 // Requires JWT authentication. Extracts hospital_id from JWT claims to ensure
 // staff can only search patients from their own hospital.

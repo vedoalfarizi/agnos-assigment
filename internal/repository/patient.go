@@ -18,6 +18,32 @@ func NewPatientRepo(db *sqlx.DB) *PatientRepo {
 	return &PatientRepo{db: db}
 }
 
+// GetPatientByID searches for a single patient by national_id or passport_id across all hospitals.
+// Returns nil if patient not found, or an error if the database query fails.
+func (r *PatientRepo) GetPatientByID(id string) (*model.Patient, error) {
+	const query = `
+		SELECT p.id, p.hospital_id, p.first_name_th, p.middle_name_th, p.last_name_th,
+		       p.first_name_en, p.middle_name_en, p.last_name_en, p.national_id, p.passport_id,
+		       p.date_of_birth, p.phone_number, p.email, p.gender, h.name AS hospital_name, p.created_at, p.updated_at
+		FROM patients p
+		LEFT JOIN hospital h ON p.hospital_id = h.id
+		WHERE p.national_id = $1 OR p.passport_id = $1
+		LIMIT 1
+	`
+
+	var patient model.Patient
+	err := r.db.Get(&patient, query, id)
+	if err != nil {
+		// Check if no rows found
+		if err.Error() == "sql: no rows in result set" {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return &patient, nil
+}
+
 // SearchPatients dynamically builds a query based on provided search criteria.
 // Always filters by hospital_id. For non-empty fields in the request:
 // - IDs, dates, and contact info (national_id, passport_id, date_of_birth, phone_number, email) use exact match
