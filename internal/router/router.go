@@ -7,6 +7,7 @@ import (
 	"github.com/vedoalfarizi/hospital-api/internal/config"
 	"github.com/vedoalfarizi/hospital-api/internal/handler"
 	"github.com/vedoalfarizi/hospital-api/internal/logger"
+	"github.com/vedoalfarizi/hospital-api/internal/middleware"
 	"github.com/vedoalfarizi/hospital-api/internal/repository"
 	"github.com/vedoalfarizi/hospital-api/internal/service"
 )
@@ -29,6 +30,13 @@ func New(log *logger.Logger, cfg *config.Config, db *sqlx.DB) *gin.Engine {
 	// pass JWT secret and expiration from config
 	staffSvc := service.NewStaffService(staffRepo, []byte(cfg.JWTSecret), cfg.JWTExpirationDays)
 
+	// setup patient components (search)
+	patientRepo := repository.NewPatientRepo(db)
+	patientSvc := service.NewPatientService(patientRepo)
+
+	// Auth middleware with JWT secret
+	authMiddleware := middleware.AuthMiddleware([]byte(cfg.JWTSecret))
+
 	// public health endpoint
 	r.GET("/health", handler.HealthCheck(healthSvc, log.Logger))
 
@@ -36,6 +44,9 @@ func New(log *logger.Logger, cfg *config.Config, db *sqlx.DB) *gin.Engine {
 	r.POST("/staff/create", handler.CreateStaff(staffSvc, log.Logger))
 	// staff login endpoint (public)
 	r.POST("/staff/login", handler.LoginStaff(staffSvc, log.Logger))
+
+	// Protected patient endpoints (require auth)
+	r.GET("/patient/search", authMiddleware, handler.SearchPatients(patientSvc, log.Logger))
 
 	// example versioned endpoint (could be removed later)
 	v1 := r.Group("/api/v1")

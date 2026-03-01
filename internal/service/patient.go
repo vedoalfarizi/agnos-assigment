@@ -1,0 +1,50 @@
+package service
+
+import (
+	"github.com/jmoiron/sqlx"
+	"github.com/vedoalfarizi/hospital-api/internal/dto"
+	"github.com/vedoalfarizi/hospital-api/internal/repository"
+)
+
+type PatientService struct {
+	repo *repository.PatientRepo
+}
+
+// NewPatientService constructs a PatientService instance.
+func NewPatientService(repo *repository.PatientRepo) *PatientService {
+	return &PatientService{repo: repo}
+}
+
+// SearchPatients searches for patients matching the provided criteria within a hospital.
+// Returns a slice of PatientSearchResponse DTOs. Returns an empty slice if no matches are found.
+func (s *PatientService) SearchPatients(db *sqlx.DB, hospitalID int, query dto.PatientSearchRequest) ([]dto.PatientSearchResponse, error) {
+	// Note: db parameter is provided for consistency with service patterns,
+	// though this implementation uses the repository's internal db connection
+
+	patients, err := s.repo.SearchPatients(hospitalID, query)
+	if err != nil {
+		return nil, err
+	}
+
+	// Map Patient models to DTOs
+	responses := make([]dto.PatientSearchResponse, len(patients))
+	for i, p := range patients {
+		responses[i] = dto.PatientSearchResponse{
+			ID:           p.ID,
+			HospitalID:   p.HospitalID,
+			FirstNameEn:  p.FirstNameEn,
+			MiddleNameEn: p.MiddleNameEn,
+			LastNameEn:   p.LastNameEn,
+			FirstNameTh:  p.FirstNameTh,
+			MiddleNameTh: p.MiddleNameTh,
+			LastNameTh:   p.LastNameTh,
+			NationalID:   p.NationalID,
+			PassportID:   p.PassportID,
+			PhoneNumber:  p.PhoneNumber,
+			Email:        p.Email,
+			DateOfBirth:  p.DateOfBirth,
+		}
+	}
+
+	return responses, nil
+}
