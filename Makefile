@@ -1,4 +1,4 @@
-.PHONY: help build run migrate-up migrate-down clean test dev db-up db-down db-logs db-reset
+.PHONY: help build run migrate-up migrate-down clean test dev db-up db-down db-logs db-reset docker-up docker-down docker-logs
 
 help:
 	@echo "Hospital API - Available commands:"
@@ -16,6 +16,11 @@ help:
 	@echo "  make db-down          - Stop PostgreSQL database"
 	@echo "  make db-logs          - View database logs"
 	@echo "  make db-reset         - Remove database and start fresh"
+	@echo ""
+	@echo "Docker Compose (Full Stack):"
+	@echo "  make docker-up        - Start all services (postgres → migrate → api → nginx)"
+	@echo "  make docker-down      - Stop all services"
+	@echo "  make docker-logs      - View all services logs"
 	@echo ""
 
 build:
@@ -58,7 +63,13 @@ test:
 	@echo "Coverage report generated: coverage.html"
 
 dev:
-	@e
+	@echo "Starting server in development mode..."
+	@if command -v air >/dev/null 2>&1; then \
+		air; \
+	else \
+		echo "air not found, running go run instead..."; \
+		go run ./cmd/api; \
+	fi
 
 db-up:
 	@echo "Starting PostgreSQL database..."
@@ -81,10 +92,16 @@ db-reset:
 	docker-compose up -d postgres
 	@echo "Waiting for database to be ready..."
 	@sleep 5
-	@echo "Database is ready!"cho "Starting server in development mode..."
-	@if command -v air >/dev/null 2>&1; then \
-		air; \
-	else \
-		echo "air not found, running go run instead..."; \
-		go run ./cmd/api; \
-	fi
+	@echo "Database is ready!"
+
+docker-up:
+	@echo "Starting full stack (postgres → migrate → api → nginx)..."
+	docker-compose up
+
+docker-down:
+	@echo "Stopping all services..."
+	docker-compose down
+
+docker-logs:
+	@echo "Showing all services logs..."
+	docker-compose logs -f

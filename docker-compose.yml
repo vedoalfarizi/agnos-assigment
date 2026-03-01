@@ -31,6 +31,50 @@ services:
     volumes:
       - ./migrations:/migrations
 
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hospital-api-app
+    env_file: .env
+    environment:
+      APP_PORT: 8080
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DATABASE_DSN: "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    networks:
+      - hospital-network
+    expose:
+      - "8080"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  nginx:
+    image: nginx:latest
+    container_name: hospital-api-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - hospital-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 networks:
   hospital-network:
     driver: bridge

@@ -244,6 +244,132 @@ LIMIT $3 OFFSET $4
 - Manage `JWT_SECRET` securely (KMS or secret store in prod). Rotate secrets per policy.
 
 
+## 12.5 Nginx & Docker Compose Infrastructure
+
+### Architecture Overview
+The application runs in a multi-container Docker setup orchestrated by `docker-compose.yml`:
+
+```
+┌─────────────┐
+│   Nginx     │ (port 80:80) — Reverse proxy & API gateway
+├─────────────┤
+│     API     │ (internal :8080) — Go application
+├─────────────┤
+│  PostgreSQL │ (internal :5432) — Database
+└─────────────┘
+```
+
+**Data Flow**: Client → Nginx (port 80) → API service (:8080) → PostgreSQL (:5432)
+
+### Docker Compose Services
+
+**1. PostgreSQL (postgres)**
+- Image: `postgres:16`
+- Health check: `pg_isready`
+- Volume: `postgres_data` (persistent)
+- Port: `:5432` (exposed for local dev debugging only)
+- Env: `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` from `.env`
+
+**2. Database Migrator (migrate)**
+- Image: `migrate/migrate`
+- Runs migrations from `./migrations` directory
+- Depends on postgres health check
+- Execution: One-shot container (runs once, exits)
+
+**3. API Service (api)**
+- Build: Multi-stage Dockerfile (golang:1.25.0 → alpine:3.20)
+- Env: Reads from `.env` file; sets `DB_HOST=postgres` for internal networking
+- Depends on: postgres (healthy) + migrate (completed)
+- Port: `:8080` internal (exposed only to nginx via docker-compose network)
+- Health check: `wget http://localhost:8080/api/health`
+
+**4. Nginx (nginx)**
+- Image: `nginx:latest`
+- Configuration: Mounted from `./nginx/nginx.conf`
+- Port: `:80:80` (public-facing HTTP)
+- Upstream: Routes to `api:8080` (docker-compose service DNS)
+- Depends on: api (healthy)
+- Health check: `wget http://localhost:80/api/health`
+
+### Startup Sequence
+```
+1. Postgres starts (waits for health check ✓)
+2. Migrate runs migrations (waits for postgres health check ✓)
+3. API builds and starts (waits for postgres + migrate completion ✓)
+4. Nginx starts and routes traffic (waits for api health check ✓)
+```
+
+### Nginx Configuration Details
+- **Upstream block**: Resolves `api` to container DNS (docker-compose auto-manages)
+- **Location blocks**:
+  - `/api/health` — Health check endpoint (passthrough)
+  - `/api/` — General API routing with X-Forwarded headers
+  - `/` — Redirects to health endpoint
+- **Headers preserved for API**:
+  - `X-Real-IP` — Client IP
+  - `X-Forwarded-For` — Proxy chain
+  - `X-Forwarded-Proto` — Original scheme (future: HTTPS)
+  - `X-Forwarded-Host` — Original host
+
+### Development Workflow
+```bash
+# Start full stack: postgres → migrate → api → nginx
+docker-compose up
+
+# Access API
+curl http://localhost/api/health
+
+# View logs
+docker-compose logs -f api
+docker-compose logs -f nginx
+
+# Rebuild API after code changes
+docker-compose up --build api
+
+# Stop everything
+docker-compose down
+
+# Reset database and restart
+docker-compose down -v
+docker-compose up
+```
+
+### Local Development Without Docker
+For faster iteration, run the API locally:
+```bash
+# Start postgres & migrate only
+docker-compose up postgres migrate
+
+# In another terminal, run API locally
+APP_PORT=8080 DB_HOST=localhost make run
+
+# Nginx not needed for local dev; call API directly on :8080
+curl http://localhost:8080/api/health
+```
+
+### Environment Variables
+When running in Docker, ensure `.env` contains:
+```bash
+APP_PORT=8080                  # API internal port
+DB_HOST=postgres              # Docker service name (not localhost!)
+DB_PORT=5432
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=<secure_password>
+POSTGRES_DB=hospital_db
+DATABASE_DSN=postgres://postgres:password@postgres:5432/hospital_db?sslmode=disable
+JWT_SECRET=<secure_secret>
+```
+
+### Production Considerations
+- Replace `nginx:latest` with versioned tag (e.g., `nginx:1.26-alpine`)
+- Mount SSL certificates into nginx for HTTPS termination
+- Use environment substitution (`.env` file) for secrets in docker-compose
+- Set `APP_ENV=production` and `GIN_MODE=release` in prod `.env`
+- Use a secrets manager (Docker Secrets, HashiCorp Vault) instead of `.env` in production
+- Configure log aggregation (ELK, Datadog) for nginx and API logs
+- Set resource limits (CPU, memory) per container
+
+
 ## 13. Testing Strategy
 - Unit-test repository query builders, service logic, middleware and handlers.
 - Use `httptest` for handler tests and interface-based mocks for repositories.
