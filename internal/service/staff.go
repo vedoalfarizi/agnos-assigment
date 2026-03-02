@@ -8,6 +8,7 @@ import (
 
 	"github.com/golang-jwt/jwt"
 	"github.com/vedoalfarizi/hospital-api/internal/dto"
+	"github.com/vedoalfarizi/hospital-api/internal/logger"
 	"github.com/vedoalfarizi/hospital-api/internal/model"
 	"github.com/vedoalfarizi/hospital-api/internal/repository"
 	"golang.org/x/crypto/bcrypt"
@@ -35,12 +36,14 @@ func (s *StaffService) CreateStaff(ctx context.Context, req *dto.StaffCreateRequ
 	// Verify hospital exists via HospitalRepo; returns ErrNotFound if missing
 	err := s.hospitalRepo.HospitalExists(req.HospitalID)
 	if err != nil {
+		// HospitalRepo logs this error, just propagate
 		return nil, err
 	}
 
 	// Hash the password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
+		logger.ErrorfWithContext(ctx, "staff creation failed: password hashing error, username=%s, error=%v", req.Username, err)
 		return nil, fmt.Errorf("failed to hash password: %w", err)
 	}
 
@@ -52,8 +55,10 @@ func (s *StaffService) CreateStaff(ctx context.Context, req *dto.StaffCreateRequ
 	}
 
 	// Create staff in database
+	// Note: StaffRepo logs duplicate/database errors, so we just propagate
 	createdStaff, err := s.repo.CreateStaff(staff)
 	if err != nil {
+		// Repository already logged this error, don't duplicate
 		return nil, err
 	}
 
@@ -76,13 +81,16 @@ func (s *StaffService) Login(ctx context.Context, req *dto.StaffLoginRequest) (*
 	staff, err := s.repo.GetByUsername(req.Username)
 	if err != nil {
 		if err == repository.ErrNotFound {
+			// Repository logs not found, convert to ErrInvalidCredentials for security
 			return nil, ErrInvalidCredentials
 		}
+		// Repository already logged this error, just propagate
 		return nil, err
 	}
 
 	// compare password
 	if bcrypt.CompareHashAndPassword([]byte(staff.Password), []byte(req.Password)) != nil {
+		logger.WarnfWithContext(ctx, "login failed: invalid password, username=%s, user_id=%d", req.Username, staff.ID)
 		return nil, ErrInvalidCredentials
 	}
 
@@ -96,6 +104,7 @@ func (s *StaffService) Login(ctx context.Context, req *dto.StaffLoginRequest) (*
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenString, err := token.SignedString(s.jwtSecret)
 	if err != nil {
+		logger.ErrorfWithContext(ctx, "login failed: token signing error, username=%s, user_id=%d, error=%v", req.Username, staff.ID, err)
 		return nil, fmt.Errorf("failed to sign token: %w", err)
 	}
 

@@ -26,7 +26,7 @@ func HealthCheck(svc *service.HealthService) gin.HandlerFunc {
 			// database ping failed, mark unhealthy and log error for engineers
 			databaseStatus = "down"
 			overall = "unhealthy"
-			logger.Errorf("database health check failed: %v", err)
+			logger.ErrorfWithContext(c.Request.Context(), "database health check failed: error=%v", err)
 		}
 
 		resp := HealthCheckResponse{

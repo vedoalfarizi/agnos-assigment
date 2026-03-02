@@ -6,6 +6,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
+	"github.com/vedoalfarizi/hospital-api/internal/logger"
 	"github.com/vedoalfarizi/hospital-api/internal/model"
 )
 
@@ -46,11 +47,15 @@ func (r *StaffRepo) CreateStaff(staff *model.Staff) (*model.Staff, error) {
 	if err != nil {
 		// Handle unique constraint violation (username already exists)
 		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == "23505" {
+			logger.Warnf("duplicate staff username: username=%s, hospital_id=%d", staff.Username, staff.HospitalID)
 			return nil, ErrDuplicate
 		}
+		// Log other database errors with context
+		logger.Errorf("failed to create staff member: username=%s, hospital_id=%d, error=%v", staff.Username, staff.HospitalID, err)
 		return nil, err
 	}
 
+	logger.Infof("staff member created successfully: id=%d, username=%s, hospital_id=%d", result.ID, result.Username, result.HospitalID)
 	return &result, nil
 }
 
@@ -67,9 +72,12 @@ func (r *StaffRepo) GetByUsername(username string) (*model.Staff, error) {
 	err := r.db.Get(&s, query, username)
 	if err != nil {
 		if err == sql.ErrNoRows {
+			logger.Debugf("staff member not found: username=%s", username)
 			return nil, ErrNotFound
 		}
+		logger.Errorf("failed to retrieve staff member: username=%s, error=%v", username, err)
 		return nil, err
 	}
+	logger.Debugf("staff member found: username=%s, id=%d, hospital_id=%d", username, s.ID, s.HospitalID)
 	return &s, nil
 }

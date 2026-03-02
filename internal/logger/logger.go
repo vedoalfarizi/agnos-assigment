@@ -1,11 +1,22 @@
 package logger
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
 
 	"github.com/sirupsen/logrus"
+)
+
+// Context keys for request metadata
+type contextKey string
+
+const (
+	RequestIDKey contextKey = "request_id"
+	ClientIPKey  contextKey = "client_ip"
+	PathKey      contextKey = "path"
+	MethodKey    contextKey = "method"
 )
 
 type Logger struct {
@@ -84,4 +95,48 @@ func (l *Logger) WithOutput(w io.Writer) *Logger {
 func (l *Logger) Fatalf(format string, args ...interface{}) {
 	l.Error(fmt.Sprintf(format, args...))
 	os.Exit(1)
+}
+
+// extractRequestContext pulls request metadata from context into logrus Fields
+func extractRequestContext(ctx context.Context) logrus.Fields {
+	fields := logrus.Fields{}
+
+	if requestID, ok := ctx.Value(RequestIDKey).(string); ok && requestID != "" {
+		fields["request_id"] = requestID
+	}
+
+	if clientIP, ok := ctx.Value(ClientIPKey).(string); ok && clientIP != "" {
+		fields["client_ip"] = clientIP
+	}
+
+	if path, ok := ctx.Value(PathKey).(string); ok && path != "" {
+		fields["path"] = path
+	}
+
+	if method, ok := ctx.Value(MethodKey).(string); ok && method != "" {
+		fields["method"] = method
+	}
+
+	return fields
+}
+
+// Context-aware logging functions that automatically include request metadata
+func InfofWithContext(ctx context.Context, format string, args ...interface{}) {
+	entry := Get().WithFields(extractRequestContext(ctx))
+	entry.Infof(format, args...)
+}
+
+func WarnfWithContext(ctx context.Context, format string, args ...interface{}) {
+	entry := Get().WithFields(extractRequestContext(ctx))
+	entry.Warnf(format, args...)
+}
+
+func ErrorfWithContext(ctx context.Context, format string, args ...interface{}) {
+	entry := Get().WithFields(extractRequestContext(ctx))
+	entry.Errorf(format, args...)
+}
+
+func DebugfWithContext(ctx context.Context, format string, args ...interface{}) {
+	entry := Get().WithFields(extractRequestContext(ctx))
+	entry.Debugf(format, args...)
 }

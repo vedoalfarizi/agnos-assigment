@@ -20,6 +20,9 @@ func New(cfg *config.Config, db *sqlx.DB) *gin.Engine {
 
 	r := gin.Default()
 
+	// Request context middleware - automatically adds request_id, client_ip, path, method to logs
+	r.Use(middleware.RequestContextMiddleware())
+
 	// setup health check components
 	healthRepo := repository.NewHealthRepo(db)
 	healthSvc := service.NewHealthService(healthRepo)

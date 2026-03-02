@@ -4,6 +4,7 @@ import (
 	"database/sql"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/vedoalfarizi/hospital-api/internal/logger"
 )
 
 // IHospitalRepo abstracts hospital-related data access for testability.
@@ -30,10 +31,13 @@ func (r *HospitalRepo) HospitalExists(hospitalID int) error {
 	err := r.db.QueryRow(query, hospitalID).Scan(&exists)
 	if err != nil {
 		if err == sql.ErrNoRows {
+			logger.Warnf("hospital not found: hospital_id=%d", hospitalID)
 			return ErrNotFound
 		}
+		logger.Errorf("failed to check hospital existence: hospital_id=%d, error=%v", hospitalID, err)
 		return err
 	}
 
+	logger.Debugf("hospital validation successful: hospital_id=%d", hospitalID)
 	return nil
 }

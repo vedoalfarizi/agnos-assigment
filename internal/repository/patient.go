@@ -6,6 +6,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/vedoalfarizi/hospital-api/internal/dto"
+	"github.com/vedoalfarizi/hospital-api/internal/logger"
 	"github.com/vedoalfarizi/hospital-api/internal/model"
 )
 
@@ -45,11 +46,14 @@ func (r *PatientRepo) GetPatientByID(id string) (*model.Patient, error) {
 	if err != nil {
 		// Check if no rows found
 		if err.Error() == "sql: no rows in result set" {
+			logger.Debugf("patient not found by id: id=%s", id)
 			return nil, nil
 		}
+		logger.Errorf("failed to retrieve patient by id: id=%s, error=%v", id, err)
 		return nil, err
 	}
 
+	logger.Debugf("patient found: id=%d, hospital_id=%d, search_key=%s", patient.ID, patient.HospitalID, id)
 	return &patient, nil
 }
 
@@ -136,13 +140,16 @@ func (r *PatientRepo) SearchPatients(hospitalID int, query dto.PatientSearchRequ
 	var patients []model.Patient
 	err := r.db.Select(&patients, finalQuery, args...)
 	if err != nil {
+		logger.Errorf("failed to search patients: hospital_id=%d, query=%+v, error=%v", hospitalID, query, err)
 		return nil, err
 	}
 
 	// Return empty slice if no results (not an error)
 	if len(patients) == 0 {
+		logger.Debugf("patient search returned no results: hospital_id=%d, filters=%+v", hospitalID, query)
 		return []model.Patient{}, nil
 	}
 
+	logger.Debugf("patient search successful: hospital_id=%d, returned_count=%d, filters=%+v", hospitalID, len(patients), query)
 	return patients, nil
 }

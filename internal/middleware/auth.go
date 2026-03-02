@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
 	"github.com/vedoalfarizi/hospital-api/internal/handler"
+	"github.com/vedoalfarizi/hospital-api/internal/logger"
 )
 
 // Claims represents the JWT claims structure matching StaffService token generation
@@ -23,6 +24,7 @@ func AuthMiddleware(secret []byte) gin.HandlerFunc {
 		// Extract Authorization header
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
+			logger.WarnfWithContext(c.Request.Context(), "auth failed: missing authorization header")
 			handler.Error(c, 401, "UNAUTHORIZED", "Authentication required or token invalid")
 			c.Abort()
 			return
@@ -30,6 +32,7 @@ func AuthMiddleware(secret []byte) gin.HandlerFunc {
 
 		// Check Bearer prefix
 		if !strings.HasPrefix(authHeader, "Bearer ") {
+			logger.WarnfWithContext(c.Request.Context(), "auth failed: invalid authorization header format")
 			handler.Error(c, 401, "UNAUTHORIZED", "Authentication required or token invalid")
 			c.Abort()
 			return
@@ -44,6 +47,7 @@ func AuthMiddleware(secret []byte) gin.HandlerFunc {
 		})
 
 		if err != nil || !token.Valid {
+			logger.WarnfWithContext(c.Request.Context(), "auth failed: invalid or expired token, error=%v", err)
 			handler.Error(c, 401, "UNAUTHORIZED", "Authentication required or token invalid")
 			c.Abort()
 			return
@@ -52,10 +56,13 @@ func AuthMiddleware(secret []byte) gin.HandlerFunc {
 		// Extract claims
 		claims, ok := token.Claims.(*Claims)
 		if !ok {
+			logger.ErrorfWithContext(c.Request.Context(), "auth failed: invalid claims structure")
 			handler.Error(c, 401, "UNAUTHORIZED", "Authentication required or token invalid")
 			c.Abort()
 			return
 		}
+
+		logger.DebugfWithContext(c.Request.Context(), "auth successful: staff_id=%d, hospital_id=%d", claims.StaffID, claims.HospitalID)
 
 		// Inject claims into request context
 		c.Set("hospital_id", claims.HospitalID)

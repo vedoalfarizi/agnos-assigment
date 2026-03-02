@@ -18,7 +18,7 @@ func CreateStaff(svc *service.StaffService) gin.HandlerFunc {
 
 		// Parse JSON request body
 		if err := c.ShouldBindJSON(&req); err != nil {
-			logger.Warnf("invalid request body: %v", err)
+			logger.WarnfWithContext(c.Request.Context(), "staff creation request validation failed: error=%v", err)
 			Error(c, 400, "INVALID_REQUEST", "Invalid request format")
 			return
 		}
@@ -26,7 +26,7 @@ func CreateStaff(svc *service.StaffService) gin.HandlerFunc {
 		// Validate request
 		validate := validator.New()
 		if err := validate.Struct(&req); err != nil {
-			logger.Warnf("validation failed: %v", err)
+			logger.WarnfWithContext(c.Request.Context(), "staff creation field validation failed: username=%s, hospital_id=%d, error=%v", req.Username, req.HospitalID, err)
 			Error(c, 400, "VALIDATION_ERROR", "Validation failed: "+err.Error())
 			return
 		}
@@ -34,18 +34,16 @@ func CreateStaff(svc *service.StaffService) gin.HandlerFunc {
 		// Call service to create staff
 		resp, err := svc.CreateStaff(c.Request.Context(), &req)
 		if err != nil {
-			// Handle specific domain errors
+			// Handle specific domain errors - service/repo already logged these
 			if err == repository.ErrNotFound {
-				logger.Warnf("hospital not found: %d", req.HospitalID)
 				Error(c, 404, "HOSPITAL_NOT_FOUND", "Hospital not found")
 				return
 			}
 			if err == repository.ErrDuplicate {
-				logger.Warnf("duplicate username: %s", req.Username)
 				Error(c, 409, "DUPLICATE_USERNAME", "Username already exists")
 				return
 			}
-			logger.Errorf("failed to create staff: %v", err)
+			// Other errors already logged by service/repo
 			Error(c, 500, "INTERNAL_ERROR", "Failed to create staff member")
 			return
 		}
@@ -66,14 +64,14 @@ func LoginStaff(svc *service.StaffService) gin.HandlerFunc {
 		var req dto.StaffLoginRequest
 
 		if err := c.ShouldBindJSON(&req); err != nil {
-			logger.Warnf("invalid login request: %v", err)
+			logger.WarnfWithContext(c.Request.Context(), "login request validation failed: error=%v", err)
 			Error(c, 400, "INVALID_REQUEST", "Invalid request format")
 			return
 		}
 
 		validate := validator.New()
 		if err := validate.Struct(&req); err != nil {
-			logger.Warnf("validation failed: %v", err)
+			logger.WarnfWithContext(c.Request.Context(), "login field validation failed: username=%s, error=%v", req.Username, err)
 			Error(c, 400, "VALIDATION_ERROR", "Validation failed: "+err.Error())
 			return
 		}
@@ -81,12 +79,11 @@ func LoginStaff(svc *service.StaffService) gin.HandlerFunc {
 		resp, err := svc.Login(c.Request.Context(), &req)
 		if err != nil {
 			if err == service.ErrInvalidCredentials {
-				logger.Warnf("invalid credentials for user %s", req.Username)
+				// Service already logged invalid password, just return response
 				Error(c, 401, "UNAUTHORIZED", "Invalid username or password")
 				return
 			}
-			// other errors bubble up
-			logger.Errorf("login failed: %v", err)
+			// Other errors already logged by service/repo
 			Error(c, 500, "INTERNAL_ERROR", "Login failed")
 			return
 		}

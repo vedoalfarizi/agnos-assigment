@@ -2,6 +2,7 @@ package service
 
 import (
 	"github.com/jmoiron/sqlx"
+
 	"github.com/vedoalfarizi/hospital-api/internal/dto"
 	"github.com/vedoalfarizi/hospital-api/internal/repository"
 )
@@ -20,10 +21,12 @@ func NewPatientService(repo repository.IPatientRepo) *PatientService {
 func (s *PatientService) GetPatientByID(id string) (*dto.PatientSearchByIDResponse, error) {
 	patient, err := s.repo.GetPatientByID(id)
 	if err != nil {
+		// Repository already logged this error
 		return nil, err
 	}
 
 	if patient == nil {
+		// Repository logs not found at debug level
 		return nil, nil
 	}
 
@@ -59,6 +62,7 @@ func (s *PatientService) SearchPatients(db *sqlx.DB, hospitalID int, query dto.P
 
 	patients, err := s.repo.SearchPatients(hospitalID, query)
 	if err != nil {
+		// Repository already logged this error
 		return nil, err
 	}
 

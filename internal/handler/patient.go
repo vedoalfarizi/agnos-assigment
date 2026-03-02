@@ -16,7 +16,7 @@ func SearchPatientByID(svc *service.PatientService) gin.HandlerFunc {
 		// Extract id from URL path
 		id := c.Param("id")
 		if id == "" {
-			logger.Warnf("empty id parameter")
+			logger.WarnfWithContext(c.Request.Context(), "invalid request: empty id parameter")
 			Error(c, 400, "INVALID_REQUEST", "ID parameter is required")
 			return
 		}
@@ -24,14 +24,13 @@ func SearchPatientByID(svc *service.PatientService) gin.HandlerFunc {
 		// Call service to get patient
 		patient, err := svc.GetPatientByID(id)
 		if err != nil {
-			logger.Errorf("failed to get patient: %v", err)
+			// Service/repo already logged error
 			Error(c, 500, "INTERNAL_ERROR", "Failed to retrieve patient")
 			return
 		}
 
 		// Return 404 if not found
 		if patient == nil {
-			logger.Debugf("patient not found with id: %s", id)
 			Error(c, 404, "PATIENT_NOT_FOUND", "Patient not found")
 			return
 		}
@@ -49,14 +48,14 @@ func SearchPatients(svc *service.PatientService) gin.HandlerFunc {
 		// Extract hospital_id and staff_id from context (set by auth middleware)
 		hospitalIDInterface, exists := c.Get("hospital_id")
 		if !exists {
-			logger.Errorf("hospital_id not found in context")
+			logger.ErrorfWithContext(c.Request.Context(), "internal error: hospital_id not found in context")
 			Error(c, 500, "INTERNAL_ERROR", "Hospital ID not found in context")
 			return
 		}
 
 		hospitalID, ok := hospitalIDInterface.(int)
 		if !ok {
-			logger.Errorf("hospital_id is not an int: %T", hospitalIDInterface)
+			logger.ErrorfWithContext(c.Request.Context(), "internal error: hospital_id is not an int: %T", hospitalIDInterface)
 			Error(c, 500, "INTERNAL_ERROR", "Invalid hospital ID type")
 			return
 		}
@@ -64,7 +63,7 @@ func SearchPatients(svc *service.PatientService) gin.HandlerFunc {
 		// Bind query parameters
 		var query dto.PatientSearchRequest
 		if err := c.ShouldBindQuery(&query); err != nil {
-			logger.Warnf("invalid query parameters: %v", err)
+			logger.WarnfWithContext(c.Request.Context(), "patient search validation failed: hospital_id=%d, error=%v", hospitalID, err)
 			Error(c, 400, "INVALID_REQUEST", "Invalid query parameters")
 			return
 		}
@@ -73,7 +72,7 @@ func SearchPatients(svc *service.PatientService) gin.HandlerFunc {
 		// Note: db is not used directly in the current implementation but passed for consistency
 		results, err := svc.SearchPatients(nil, hospitalID, query)
 		if err != nil {
-			logger.Errorf("failed to search patients: %v", err)
+			// Service/repo already logged error
 			Error(c, 500, "INTERNAL_ERROR", "Failed to search patients")
 			return
 		}
