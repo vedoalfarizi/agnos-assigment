@@ -38,19 +38,23 @@ func New(log *logger.Logger, cfg *config.Config, db *sqlx.DB) *gin.Engine {
 	// Auth middleware with JWT secret
 	authMiddleware := middleware.AuthMiddleware([]byte(cfg.JWTSecret))
 
-	// public health endpoint
-	r.GET("/health", handler.HealthCheck(healthSvc, log.Logger))
+	// API routes group
+	api := r.Group("/api")
+	{
+		// public health endpoint
+		api.GET("/health", handler.HealthCheck(healthSvc, log.Logger))
 
-	// staff create endpoint (public)
-	r.POST("/staff/create", handler.CreateStaff(staffSvc, log.Logger))
-	// staff login endpoint (public)
-	r.POST("/staff/login", handler.LoginStaff(staffSvc, log.Logger))
+		// staff create endpoint (public)
+		api.POST("/staff/create", handler.CreateStaff(staffSvc, log.Logger))
+		// staff login endpoint (public)
+		api.POST("/staff/login", handler.LoginStaff(staffSvc, log.Logger))
 
-	// Public patient search by ID endpoint
-	r.GET("/patient/search/:id", handler.SearchPatientByID(patientSvc, log.Logger))
+		// Public patient search by ID endpoint
+		api.GET("/patient/search/:id", handler.SearchPatientByID(patientSvc, log.Logger))
 
-	// Protected patient endpoints (require auth)
-	r.GET("/patient/search", authMiddleware, handler.SearchPatients(patientSvc, log.Logger))
+		// Protected patient endpoints (require auth)
+		api.GET("/patient/search", authMiddleware, handler.SearchPatients(patientSvc, log.Logger))
+	}
 
 	return r
 }

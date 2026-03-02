@@ -24,8 +24,18 @@ services:
   migrate:
     image: migrate/migrate
     depends_on:
-      - postgres
-    entrypoint: ["migrate"]
+      postgres:
+        condition: service_healthy
+    entrypoint:
+      [
+        "migrate",
+        "-path",
+        "/migrations",
+        "-database",
+        "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable",
+        "up",
+      ]
+    env_file: .env
     networks:
       - hospital-network
     volumes:
@@ -49,6 +59,8 @@ services:
         condition: service_completed_successfully
     networks:
       - hospital-network
+    ports:
+      - "8080:8080"
     expose:
       - "8080"
     healthcheck:
