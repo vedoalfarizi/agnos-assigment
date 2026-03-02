@@ -1,42 +1,48 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
-
-	"github.com/vedoalfarizi/hospital-api/internal/config"
-	"github.com/vedoalfarizi/hospital-api/internal/database/postgre"
-	"github.com/vedoalfarizi/hospital-api/internal/logger"
-	"github.com/vedoalfarizi/hospital-api/internal/router"
+	"os/signal"
+	"syscall"
 )
 
 func main() {
-	cfg, err := config.Load()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to load config: %v\n", err)
+	// Initialize application bootstrap
+	bootstrap := &Bootstrap{}
+	if err := bootstrap.Run(); err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to bootstrap application: %v\n", err)
 		os.Exit(1)
 	}
 
-	log := logger.New(cfg.LogLevel, cfg.LogFormat)
+	// Setup signal handling for graceful shutdown
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
-	// establish database connection
-	dsn := os.Getenv("DATABASE_DSN")
-	if dsn == "" {
-		// fall back to constructing from individual fields if needed
-		dsn = fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=%s",
-			cfg.DBUser, cfg.DBPassword, cfg.DBHost, cfg.DBPort, cfg.DBName, cfg.DBSSLMode)
-	}
-	if _, err := postgre.Connect(dsn); err != nil {
-		log.Fatalf("database connection failed: %v", err)
-	}
+	// Start server in a goroutine to allow signal handling
+	serverErrChan := make(chan error, 1)
+	go func() {
+		addr := bootstrap.GetServerAddr()
+		bootstrap.Logger.Infof("Starting server on %s", addr)
+		serverErrChan <- bootstrap.Router.Run(addr)
+	}()
 
-	db := postgre.GetDB()
-	r := router.New(log, cfg, db)
-	addr := fmt.Sprintf(":%d", cfg.ServerPort)
-
-	log.Infof("Starting server on %s", addr)
-	if err := r.Run(addr); err != nil {
-		log.Errorf("Server error: %v", err)
-		os.Exit(1)
+	// Wait for either server error or shutdown signal
+	select {
+	case sig := <-sigChan:
+		bootstrap.Logger.Infof("Received signal: %v", sig)
+		// Gracefully shutdown
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		if err := bootstrap.Shutdown(ctx); err != nil {
+			bootstrap.Logger.Errorf("Shutdown error: %v", err)
+			os.Exit(1)
+		}
+	case err := <-serverErrChan:
+		if err != nil {
+			bootstrap.Logger.Errorf("Server error: %v", err)
+			os.Exit(1)
+		}
 	}
 }
