@@ -36,21 +36,24 @@ cp .env.example .env  # Edit with your configs
 # 2. Start entire stack (postgres → migrate → api → nginx)
 make docker-up
 
-# 3. Verify health
+# 3. Verify health (via nginx)
 curl http://localhost/api/health
 
-# 4. Create staff user and test
-curl -X POST http://localhost/api/staff/register \
+# 4. Or access API directly
+curl http://localhost:8080/api/health
+
+# 5. Create staff user and test
+curl -X POST http://localhost:8080/api/staff/create \
   -H "Content-Type: application/json" \
   -d '{"username": "doctor", "password": "secure_password", "hospital_id": 1}'
 
-# 5. View logs
+# 6. View logs
 make docker-logs
 ```
 
 **What runs**:
 - Nginx reverse proxy (port 80) → API backend
-- Go API (internal port 8080)
+- Go API (port 8080 - directly exposed)
 - PostgreSQL database (port 5432 for local dev)
 - Database migrations (auto-run on startup)
 
@@ -143,11 +146,12 @@ docker-compose ps              # List running services
 ## API Endpoints
 
 ### Authentication
-- `POST /api/staff/register` — Register new staff user
+- `POST /api/staff/create` — Create new staff user
 - `POST /api/staff/login` — Login and retrieve JWT token
 
 ### Patient Search
-- `GET /api/patients/search` — Search patients (requires auth)
+- `GET /api/patient/search/:id` — Search patient by ID (no auth required)
+- `GET /api/patient/search` — Search patients with filters (requires auth)
   - Query params: `first_name_en`, `last_name_en`, `national_id`, `passport_id`, `phone_number`, `email`, `dob`, `gender`
 
 ### Health

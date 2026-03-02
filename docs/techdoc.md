@@ -16,7 +16,7 @@ Intended audience: Go backend engineers implementing handlers, services, reposit
 
 ## Health Check Endpoint
 
-A simple unauthenticated endpoint exposed at `/health` (and optionally versioned paths like `/api/v1/status`).
+A simple unauthenticated endpoint exposed at `/api/health` (within the API route group).
 The handler should return both overall service status and component statuses for easier operational checks.
 Example response structure:
 

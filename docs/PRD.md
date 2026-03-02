@@ -56,7 +56,7 @@ I want to search patients by their details (national_id, passport_id, first_name
 so that I can quickly find patient records without manual lookup.
 ```
 **Acceptance Criteria:**
-- GET `/api/v1/patients/search` endpoint supports query parameters for all 8 searchable fields
+- GET `/api/patient/search` endpoint supports query parameters for all 8 searchable fields
 - Supports partial matching (e.g., search "John" finds "John Smith") for first_name, middle_name, last_name, phone_number and email
 - Single hospital_id filter applied automatically from JWT token (no cross-hospital access)
 - Returns results in JSON format with patient ID, national_id, passport_id, first_name_th, middle_name_th, last_name_th, first_name_en, middle_name_en, last_name_en, date_of_birth, phone_number, email
@@ -160,18 +160,22 @@ CREATE TABLE hospital (
 
 ### API Endpoints
 
-**POST /staff/create**
+**POST /api/staff/create**
 - Request body: `{ username:string, password:string, hospital_id:integer }`
 - Response: `{"success":boolean,"data":{"id":integer,"username":string,"hospital_id":integer,"created_at":string datetime}}`
 
-**POST /staff/login**
+**POST /api/staff/login**
 - Request body: `{ username:string, password:string }`
 - Response: `{"success":boolean,"data":{"access_token":string,"token_type":string,"refresh_token":string,"expires_in":integer}}`
 
-**GET /patient/search**
+**GET /api/patient/search**
 - Query params: `national_id`, `passport_id`, `first_name`, `middle_name`, `last_name`, `date_of_birth`, `phone_number`, `email`
 - Header: `Authorization: Bearer <jwt_token>`
 - Response: `{"success":boolean,"data":[{"id":integer,"national_id":string,"passport_id":string,"first_name_th":string,"middle_name_th":string,"last_name_th":string,"first_name_en":string,"middle_name_en":string,"last_name_en":string,"date_of_birth":string,"phone_number":string,"email":string}]}`
+
+**GET /api/patient/search/:id**
+- Path param: `id` (patient ID)
+- Response: Same as list endpoint but returns single patient object
 
 ### Integration Points
 - **Authentication**: JWT-based with hospital_id claim for authorization
