@@ -204,29 +204,15 @@ For Docker Compose: Set `DB_HOST=postgres` (service name). For local dev: Set `D
 
 ## Project Structure
 
-```
-hospital-api/
-├── cmd/api/              # Application entrypoint
-├── internal/
-│   ├── config/          # Environment & configuration parsing
-│   ├── database/        # Database connection, query helpers
-│   ├── handler/         # HTTP handlers & DTOs
-│   ├── service/         # Business logic & transactions
-│   ├── repository/      # Data access & SQL
-│   ├── model/           # Domain models
-│   ├── router/          # Gin router setup
-│   ├── middleware/      # Auth, logging middleware
-│   └── logger/          # Structured logging
-├── nginx/               # Nginx reverse proxy config
-├── migrations/          # SQL migration files
-├── docs/
-│   ├── PRD.md          # Product Requirements Document
-│   └── techdoc.md      # Technical architecture & runbook
-├── Dockerfile          # Multi-stage build for API
-├── docker-compose.yml  # Full stack orchestration
-├── Makefile            # Development shortcuts
-└── go.mod, go.sum      # Go dependencies
-```
+For a complete guide to the codebase structure, folder organization, and where to make changes, see [docs/project-structure.md](docs/project-structure.md).
+
+Quick overview:
+- `cmd/api/` — Application entrypoint
+- `internal/` — Core application code (handlers, services, repositories, models, middleware, config, database, logger)
+- `migrations/` — SQL migration files
+- `nginx/` — Nginx reverse proxy config
+- `docs/` — Documentation (PRD, architecture, API spec, project structure)
+- `Dockerfile` & `docker-compose.yml` — Containerization
 
 ---
 
@@ -317,10 +303,12 @@ docker-compose exec postgres pg_isready -U postgres
 
 ## Contributing
 
-1. Check [docs/techdoc.md](docs/techdoc.md) for code patterns and conventions
-2. Run tests before committing: `make test`
-3. Ensure all endpoints are authenticated (except `/api/health`)
-4. Add unit tests for new handlers/services
+1. **Understand the project structure**: Read [docs/project-structure.md](docs/project-structure.md) to learn where code lives and how to add features
+2. **Review architecture patterns**: Check [docs/techdoc.md](docs/techdoc.md) for code patterns and conventions
+3. **Run tests before committing**: `make test`
+4. **Maintain security**: Ensure all endpoints are authenticated (except `/api/health` and public patient lookup)
+5. **Add tests for new code**: Write unit tests for new handlers/services
+6. **Check API spec**: Review [docs/openapi.yaml](docs/openapi.yaml) to understand request/response contracts
 
 ---
 
