@@ -13,7 +13,6 @@ import (
 // Returns 404 if patient not found.
 func SearchPatientByID(svc *service.PatientService) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Extract id from URL path
 		id := c.Param("id")
 		if id == "" {
 			logger.WarnfWithContext(c.Request.Context(), "invalid request: empty id parameter")
@@ -21,21 +20,17 @@ func SearchPatientByID(svc *service.PatientService) gin.HandlerFunc {
 			return
 		}
 
-		// Call service to get patient
 		patient, err := svc.GetPatientByID(id)
 		if err != nil {
-			// Service/repo already logged error
 			Error(c, 500, "INTERNAL_ERROR", "Failed to retrieve patient")
 			return
 		}
 
-		// Return 404 if not found
 		if patient == nil {
 			Error(c, 404, "PATIENT_NOT_FOUND", "Patient not found")
 			return
 		}
 
-		// Return patient data
 		Success(c, patient)
 	}
 }
@@ -45,7 +40,6 @@ func SearchPatientByID(svc *service.PatientService) gin.HandlerFunc {
 // staff can only search patients from their own hospital.
 func SearchPatients(svc *service.PatientService) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Extract hospital_id and staff_id from context (set by auth middleware)
 		hospitalIDInterface, exists := c.Get("hospital_id")
 		if !exists {
 			logger.ErrorfWithContext(c.Request.Context(), "internal error: hospital_id not found in context")
@@ -60,7 +54,6 @@ func SearchPatients(svc *service.PatientService) gin.HandlerFunc {
 			return
 		}
 
-		// Bind query parameters
 		var query dto.PatientSearchRequest
 		if err := c.ShouldBindQuery(&query); err != nil {
 			logger.WarnfWithContext(c.Request.Context(), "patient search validation failed: hospital_id=%d, error=%v", hospitalID, err)
@@ -68,16 +61,13 @@ func SearchPatients(svc *service.PatientService) gin.HandlerFunc {
 			return
 		}
 
-		// Call service to search patients
 		// Note: db is not used directly in the current implementation but passed for consistency
 		results, err := svc.SearchPatients(nil, hospitalID, query)
 		if err != nil {
-			// Service/repo already logged error
 			Error(c, 500, "INTERNAL_ERROR", "Failed to search patients")
 			return
 		}
 
-		// Return results (empty slice if no matches)
 		Success(c, results)
 	}
 }

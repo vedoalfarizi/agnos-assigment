@@ -16,14 +16,12 @@ func CreateStaff(svc *service.StaffService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req dto.StaffCreateRequest
 
-		// Parse JSON request body
 		if err := c.ShouldBindJSON(&req); err != nil {
 			logger.WarnfWithContext(c.Request.Context(), "staff creation request validation failed: error=%v", err)
 			Error(c, 400, "INVALID_REQUEST", "Invalid request format")
 			return
 		}
 
-		// Validate request
 		validate := validator.New()
 		if err := validate.Struct(&req); err != nil {
 			logger.WarnfWithContext(c.Request.Context(), "staff creation field validation failed: username=%s, hospital_id=%d, error=%v", req.Username, req.HospitalID, err)
@@ -31,10 +29,8 @@ func CreateStaff(svc *service.StaffService) gin.HandlerFunc {
 			return
 		}
 
-		// Call service to create staff
 		resp, err := svc.CreateStaff(c.Request.Context(), &req)
 		if err != nil {
-			// Handle specific domain errors - service/repo already logged these
 			if err == repository.ErrNotFound {
 				Error(c, 404, "HOSPITAL_NOT_FOUND", "Hospital not found")
 				return
@@ -43,12 +39,10 @@ func CreateStaff(svc *service.StaffService) gin.HandlerFunc {
 				Error(c, 409, "DUPLICATE_USERNAME", "Username already exists")
 				return
 			}
-			// Other errors already logged by service/repo
 			Error(c, 500, "INTERNAL_ERROR", "Failed to create staff member")
 			return
 		}
 
-		// Success response - handler adds human-readable message
 		Success(c, gin.H{
 			"id":          resp.ID,
 			"username":    resp.Username,
@@ -79,11 +73,9 @@ func LoginStaff(svc *service.StaffService) gin.HandlerFunc {
 		resp, err := svc.Login(c.Request.Context(), &req)
 		if err != nil {
 			if err == service.ErrInvalidCredentials {
-				// Service already logged invalid password, just return response
 				Error(c, 401, "UNAUTHORIZED", "Invalid username or password")
 				return
 			}
-			// Other errors already logged by service/repo
 			Error(c, 500, "INTERNAL_ERROR", "Login failed")
 			return
 		}

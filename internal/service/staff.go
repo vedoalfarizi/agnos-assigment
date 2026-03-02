@@ -33,36 +33,27 @@ func NewStaffService(r repository.IStaffRepo, h repository.IHospitalRepo, jwtSec
 // CreateStaff validates the request, checks hospital existence, hashes the password,
 // and creates a new staff member. Returns a service-level response DTO.
 func (s *StaffService) CreateStaff(ctx context.Context, req *dto.StaffCreateRequest) (*dto.StaffCreateResponse, error) {
-	// Verify hospital exists via HospitalRepo; returns ErrNotFound if missing
 	err := s.hospitalRepo.HospitalExists(req.HospitalID)
 	if err != nil {
-		// HospitalRepo logs this error, just propagate
 		return nil, err
 	}
 
-	// Hash the password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
 		logger.ErrorfWithContext(ctx, "staff creation failed: password hashing error, username=%s, error=%v", req.Username, err)
 		return nil, fmt.Errorf("failed to hash password: %w", err)
 	}
 
-	// Create staff model
 	staff := &model.Staff{
 		HospitalID: req.HospitalID,
 		Username:   req.Username,
 		Password:   string(hashedPassword),
 	}
-
-	// Create staff in database
-	// Note: StaffRepo logs duplicate/database errors, so we just propagate
 	createdStaff, err := s.repo.CreateStaff(staff)
 	if err != nil {
-		// Repository already logged this error, don't duplicate
 		return nil, err
 	}
 
-	// Return service-level response (data only)
 	return &dto.StaffCreateResponse{
 		ID:         createdStaff.ID,
 		Username:   createdStaff.Username,
@@ -77,24 +68,20 @@ var ErrInvalidCredentials = errors.New("invalid credentials")
 // credentials are valid. It returns ErrInvalidCredentials for authentication
 // failures, or other errors for unexpected issues.
 func (s *StaffService) Login(ctx context.Context, req *dto.StaffLoginRequest) (*dto.StaffLoginResponse, error) {
-	// lookup user by username
 	staff, err := s.repo.GetByUsername(req.Username)
 	if err != nil {
 		if err == repository.ErrNotFound {
 			// Repository logs not found, convert to ErrInvalidCredentials for security
 			return nil, ErrInvalidCredentials
 		}
-		// Repository already logged this error, just propagate
 		return nil, err
 	}
 
-	// compare password
 	if bcrypt.CompareHashAndPassword([]byte(staff.Password), []byte(req.Password)) != nil {
 		logger.WarnfWithContext(ctx, "login failed: invalid password, username=%s, user_id=%d", req.Username, staff.ID)
 		return nil, ErrInvalidCredentials
 	}
 
-	// build token
 	expiresAt := time.Now().Add(time.Duration(s.expirationDays) * 24 * time.Hour).Unix()
 	claims := jwt.MapClaims{
 		"staff_id":    staff.ID,

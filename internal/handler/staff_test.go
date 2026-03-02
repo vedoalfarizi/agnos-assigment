@@ -50,7 +50,6 @@ func TestCreateStaff_Success(t *testing.T) {
 	mockHospitalRepo := new(mocks.IHospitalRepo)
 	
 
-	// Setup expectations
 	mockHospitalRepo.On("HospitalExists", 1).Return(nil)
 	mockStaffRepo.On("CreateStaff", mock.AnythingOfType("*model.Staff")).
 		Return(&model.Staff{
@@ -62,18 +61,14 @@ func TestCreateStaff_Success(t *testing.T) {
 	svc := newStaffServiceWithMocks(mockStaffRepo, mockHospitalRepo)
 	engine, recorder := setupGinContext(t)
 
-	// Register route
 	engine.POST("/staff/create", CreateStaff(svc))
 
-	// Build request
 	body := buildCreateStaffRequest("john_doe", "securepass123", 1)
 	req := httptest.NewRequest("POST", "/staff/create", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 
-	// Execute
 	engine.ServeHTTP(recorder, req)
 
-	// Assertions
 	if recorder.Code != http.StatusOK {
 		t.Errorf("expected status 200, got %d", recorder.Code)
 	}

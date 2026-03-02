@@ -71,21 +71,17 @@ func TestHospitalExists_TableDriven(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Create mock database
 			mockDB, mock, err := sqlmock.New()
 			if err != nil {
 				t.Fatalf("failed to create sqlmock: %v", err)
 			}
 			defer mockDB.Close()
 
-			// Setup expectations
 			tt.setupMock(mock)
 
-			// Wrap mock with sqlx
 			db := sqlx.NewDb(mockDB, "postgres")
 			repo := NewHospitalRepo(db)
 
-			// Execute
 			result := repo.HospitalExists(tt.hospitalID)
 
 			// Verify - special handling for row scan error test

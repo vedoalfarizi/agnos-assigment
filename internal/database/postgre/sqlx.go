@@ -19,12 +19,11 @@ func Connect(dsn string) (*sqlx.DB, error) {
 		return nil, err
 	}
 
-	// basic pooling settings, copied from techdoc
+	// basic pooling settings
 	d.SetMaxOpenConns(25)
 	d.SetMaxIdleConns(5)
 	d.SetConnMaxLifetime(5 * time.Minute)
 
-	// verify connection
 	if err := d.Ping(); err != nil {
 		return nil, err
 	}
