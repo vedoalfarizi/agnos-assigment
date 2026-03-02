@@ -16,7 +16,6 @@ import (
 // Bootstrap holds all initialized application components
 type Bootstrap struct {
 	Config *config.Config
-	Logger *logger.Logger
 	Router *gin.Engine
 }
 
@@ -29,9 +28,8 @@ func (b *Bootstrap) Run() error {
 	}
 	b.Config = cfg
 
-	// Step 2: Initialize logger
-	log := logger.New(cfg.LogLevel, cfg.LogFormat)
-	b.Logger = log
+	// Step 2: Initialize logger as a package-level library
+	logger.Init(cfg.LogLevel, cfg.LogFormat)
 
 	// Step 3: Establish database connection
 	dsn := os.Getenv("DATABASE_DSN")
@@ -46,7 +44,7 @@ func (b *Bootstrap) Run() error {
 
 	// Step 4: Setup router with all dependencies
 	db := postgre.GetDB()
-	r := router.New(log, cfg, db)
+	r := router.New(cfg, db)
 	b.Router = r
 
 	return nil
@@ -54,9 +52,7 @@ func (b *Bootstrap) Run() error {
 
 // Shutdown gracefully closes application resources
 func (b *Bootstrap) Shutdown(ctx context.Context) error {
-	if b.Logger != nil {
-		b.Logger.Info("Shutting down application...")
-	}
+	logger.Infof("Shutting down application...")
 
 	// Close database connection with timeout
 	shutdownCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
@@ -64,29 +60,21 @@ func (b *Bootstrap) Shutdown(ctx context.Context) error {
 
 	if db := postgre.GetDB(); db != nil {
 		if err := db.Close(); err != nil {
-			if b.Logger != nil {
-				b.Logger.Errorf("Error closing database connection: %v", err)
-			}
+			logger.Errorf("Error closing database connection: %v", err)
 			return fmt.Errorf("failed to close database: %w", err)
 		}
-		if b.Logger != nil {
-			b.Logger.Info("Database connection closed")
-		}
+		logger.Infof("Database connection closed")
 	}
 
 	// Give pending requests a chance to complete
 	select {
 	case <-shutdownCtx.Done():
-		if b.Logger != nil {
-			b.Logger.Warn("Shutdown timeout exceeded")
-		}
+		logger.Warnf("Shutdown timeout exceeded")
 		return shutdownCtx.Err()
 	default:
 	}
 
-	if b.Logger != nil {
-		b.Logger.Info("Shutdown complete")
-	}
+	logger.Infof("Shutdown complete")
 	return nil
 }
 

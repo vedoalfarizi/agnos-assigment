@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/mock"
 	"github.com/vedoalfarizi/hospital-api/internal/model"
 	"github.com/vedoalfarizi/hospital-api/internal/service"
@@ -24,7 +23,7 @@ func newPatientServiceWithMocks(mockPatientRepo *mocks.IPatientRepo) *service.Pa
 // TestSearchPatients_Success tests successful patient search with results
 func TestSearchPatients_Success(t *testing.T) {
 	mockPatientRepo := new(mocks.IPatientRepo)
-	logger := logrus.New()
+	
 
 	// Setup expectations
 	firstName := "John"
@@ -50,7 +49,7 @@ func TestSearchPatients_Success(t *testing.T) {
 	engine, _ := setupGinContext(t)
 	recorder := httptest.NewRecorder()
 
-	engine.GET("/patient/search", SearchPatients(svc, logger))
+	engine.GET("/patient/search", SearchPatients(svc))
 
 	req := httptest.NewRequest("GET", "/patient/search?first_name=John&last_name=Doe", nil)
 	// Manually set context values that would be set by auth middleware
@@ -63,7 +62,7 @@ func TestSearchPatients_Success(t *testing.T) {
 	c.Set("staff_id", 1)
 
 	// Execute handler directly
-	SearchPatients(svc, logger)(c)
+	SearchPatients(svc)(c)
 
 	if recorder.Code != http.StatusOK {
 		t.Errorf("expected status 200, got %d", recorder.Code)
@@ -88,7 +87,7 @@ func TestSearchPatients_Success(t *testing.T) {
 // TestSearchPatients_NoResults tests successful search returning no results
 func TestSearchPatients_NoResults(t *testing.T) {
 	mockPatientRepo := new(mocks.IPatientRepo)
-	logger := logrus.New()
+	
 
 	// Setup expectations - return empty slice
 	mockPatientRepo.On("SearchPatients", 5, mock.AnythingOfType("dto.PatientSearchRequest")).
@@ -98,7 +97,7 @@ func TestSearchPatients_NoResults(t *testing.T) {
 	engine, _ := setupGinContext(t)
 	recorder := httptest.NewRecorder()
 
-	engine.GET("/patient/search", SearchPatients(svc, logger))
+	engine.GET("/patient/search", SearchPatients(svc))
 
 	req := httptest.NewRequest("GET", "/patient/search?first_name=NotExist", nil)
 	req.Header.Set("Content-Type", "application/json")
@@ -108,7 +107,7 @@ func TestSearchPatients_NoResults(t *testing.T) {
 	c.Set("hospital_id", 5)
 	c.Set("staff_id", 1)
 
-	SearchPatients(svc, logger)(c)
+	SearchPatients(svc)(c)
 
 	if recorder.Code != http.StatusOK {
 		t.Errorf("expected status 200, got %d", recorder.Code)
@@ -139,13 +138,13 @@ func TestSearchPatients_NoResults(t *testing.T) {
 // TestSearchPatients_MissingHospitalID tests error when hospital_id not in context
 func TestSearchPatients_MissingHospitalID(t *testing.T) {
 	mockPatientRepo := new(mocks.IPatientRepo)
-	logger := logrus.New()
+	
 
 	svc := newPatientServiceWithMocks(mockPatientRepo)
 	engine, _ := setupGinContext(t)
 	recorder := httptest.NewRecorder()
 
-	engine.GET("/patient/search", SearchPatients(svc, logger))
+	engine.GET("/patient/search", SearchPatients(svc))
 
 	req := httptest.NewRequest("GET", "/patient/search?first_name=John", nil)
 	req.Header.Set("Content-Type", "application/json")
@@ -154,7 +153,7 @@ func TestSearchPatients_MissingHospitalID(t *testing.T) {
 	c.Request = req
 	// Deliberately not setting hospital_id
 
-	SearchPatients(svc, logger)(c)
+	SearchPatients(svc)(c)
 
 	if recorder.Code != http.StatusInternalServerError {
 		t.Errorf("expected status 500, got %d", recorder.Code)
@@ -173,13 +172,13 @@ func TestSearchPatients_MissingHospitalID(t *testing.T) {
 // TestSearchPatients_InvalidHospitalIDType tests error when hospital_id has wrong type
 func TestSearchPatients_InvalidHospitalIDType(t *testing.T) {
 	mockPatientRepo := new(mocks.IPatientRepo)
-	logger := logrus.New()
+	
 
 	svc := newPatientServiceWithMocks(mockPatientRepo)
 	engine, _ := setupGinContext(t)
 	recorder := httptest.NewRecorder()
 
-	engine.GET("/patient/search", SearchPatients(svc, logger))
+	engine.GET("/patient/search", SearchPatients(svc))
 
 	req := httptest.NewRequest("GET", "/patient/search?first_name=John", nil)
 	req.Header.Set("Content-Type", "application/json")
@@ -188,7 +187,7 @@ func TestSearchPatients_InvalidHospitalIDType(t *testing.T) {
 	c.Request = req
 	c.Set("hospital_id", "invalid-string") // Wrong type
 
-	SearchPatients(svc, logger)(c)
+	SearchPatients(svc)(c)
 
 	if recorder.Code != http.StatusInternalServerError {
 		t.Errorf("expected status 500, got %d", recorder.Code)
@@ -207,7 +206,7 @@ func TestSearchPatients_InvalidHospitalIDType(t *testing.T) {
 // TestSearchPatients_InvalidQueryParameters tests handling of unknown query parameters
 func TestSearchPatients_InvalidQueryParameters(t *testing.T) {
 	mockPatientRepo := new(mocks.IPatientRepo)
-	logger := logrus.New()
+	
 
 	// Setup expectations - unknown fields are ignored
 	mockPatientRepo.On("SearchPatients", 5, mock.AnythingOfType("dto.PatientSearchRequest")).
@@ -217,7 +216,7 @@ func TestSearchPatients_InvalidQueryParameters(t *testing.T) {
 	engine, _ := setupGinContext(t)
 	recorder := httptest.NewRecorder()
 
-	engine.GET("/patient/search", SearchPatients(svc, logger))
+	engine.GET("/patient/search", SearchPatients(svc))
 
 	// Query parameters with unknown fields - they should be ignored
 	req := httptest.NewRequest("GET", "/patient/search?unknown_field=value", nil)
@@ -228,7 +227,7 @@ func TestSearchPatients_InvalidQueryParameters(t *testing.T) {
 	c.Set("hospital_id", 5)
 	c.Set("staff_id", 1)
 
-	SearchPatients(svc, logger)(c)
+	SearchPatients(svc)(c)
 
 	// This request should succeed since unknown fields are just ignored
 	if recorder.Code != http.StatusOK {
@@ -241,7 +240,7 @@ func TestSearchPatients_InvalidQueryParameters(t *testing.T) {
 // TestSearchPatients_ServiceError tests error handling for service failures
 func TestSearchPatients_ServiceError(t *testing.T) {
 	mockPatientRepo := new(mocks.IPatientRepo)
-	logger := logrus.New()
+	
 
 	// Setup expectations - return error
 	mockPatientRepo.On("SearchPatients", 5, mock.AnythingOfType("dto.PatientSearchRequest")).
@@ -251,7 +250,7 @@ func TestSearchPatients_ServiceError(t *testing.T) {
 	engine, _ := setupGinContext(t)
 	recorder := httptest.NewRecorder()
 
-	engine.GET("/patient/search", SearchPatients(svc, logger))
+	engine.GET("/patient/search", SearchPatients(svc))
 
 	req := httptest.NewRequest("GET", "/patient/search?first_name=John", nil)
 	req.Header.Set("Content-Type", "application/json")
@@ -261,7 +260,7 @@ func TestSearchPatients_ServiceError(t *testing.T) {
 	c.Set("hospital_id", 5)
 	c.Set("staff_id", 1)
 
-	SearchPatients(svc, logger)(c)
+	SearchPatients(svc)(c)
 
 	if recorder.Code != http.StatusInternalServerError {
 		t.Errorf("expected status 500, got %d", recorder.Code)
@@ -282,7 +281,7 @@ func TestSearchPatients_ServiceError(t *testing.T) {
 // TestSearchPatients_MultipleResults tests search returning multiple patients
 func TestSearchPatients_MultipleResults(t *testing.T) {
 	mockPatientRepo := new(mocks.IPatientRepo)
-	logger := logrus.New()
+	
 
 	// Setup expectations
 	firstName1 := "John"
@@ -312,7 +311,7 @@ func TestSearchPatients_MultipleResults(t *testing.T) {
 	engine, _ := setupGinContext(t)
 	recorder := httptest.NewRecorder()
 
-	engine.GET("/patient/search", SearchPatients(svc, logger))
+	engine.GET("/patient/search", SearchPatients(svc))
 
 	req := httptest.NewRequest("GET", "/patient/search?first_name=J", nil)
 	req.Header.Set("Content-Type", "application/json")
@@ -322,7 +321,7 @@ func TestSearchPatients_MultipleResults(t *testing.T) {
 	c.Set("hospital_id", 5)
 	c.Set("staff_id", 1)
 
-	SearchPatients(svc, logger)(c)
+	SearchPatients(svc)(c)
 
 	if recorder.Code != http.StatusOK {
 		t.Errorf("expected status 200, got %d", recorder.Code)
@@ -352,7 +351,7 @@ func TestSearchPatients_MultipleResults(t *testing.T) {
 // TestSearchPatients_AllFieldsFilterCriteria tests search with all filter fields populated
 func TestSearchPatients_AllFieldsFilterCriteria(t *testing.T) {
 	mockPatientRepo := new(mocks.IPatientRepo)
-	logger := logrus.New()
+	
 
 	// Setup expectations
 	firstName := "John"
@@ -371,7 +370,7 @@ func TestSearchPatients_AllFieldsFilterCriteria(t *testing.T) {
 	engine, _ := setupGinContext(t)
 	recorder := httptest.NewRecorder()
 
-	engine.GET("/patient/search", SearchPatients(svc, logger))
+	engine.GET("/patient/search", SearchPatients(svc))
 
 	// Query with multiple filter criteria
 	req := httptest.NewRequest("GET",
@@ -383,7 +382,7 @@ func TestSearchPatients_AllFieldsFilterCriteria(t *testing.T) {
 	c.Set("hospital_id", 5)
 	c.Set("staff_id", 1)
 
-	SearchPatients(svc, logger)(c)
+	SearchPatients(svc)(c)
 
 	if recorder.Code != http.StatusOK {
 		t.Errorf("expected status 200, got %d", recorder.Code)
@@ -404,7 +403,7 @@ func TestSearchPatients_AllFieldsFilterCriteria(t *testing.T) {
 // TestSearchPatients_DifferentHospitalID tests isolation of results by hospital_id
 func TestSearchPatients_DifferentHospitalID(t *testing.T) {
 	mockPatientRepo := new(mocks.IPatientRepo)
-	logger := logrus.New()
+	
 
 	firstName := "John"
 	patients := []model.Patient{
@@ -423,7 +422,7 @@ func TestSearchPatients_DifferentHospitalID(t *testing.T) {
 	engine, _ := setupGinContext(t)
 	recorder := httptest.NewRecorder()
 
-	engine.GET("/patient/search", SearchPatients(svc, logger))
+	engine.GET("/patient/search", SearchPatients(svc))
 
 	req := httptest.NewRequest("GET", "/patient/search?first_name=John", nil)
 	req.Header.Set("Content-Type", "application/json")
@@ -433,7 +432,7 @@ func TestSearchPatients_DifferentHospitalID(t *testing.T) {
 	c.Set("hospital_id", 10) // Different hospital_id
 	c.Set("staff_id", 2)
 
-	SearchPatients(svc, logger)(c)
+	SearchPatients(svc)(c)
 
 	if recorder.Code != http.StatusOK {
 		t.Errorf("expected status 200, got %d", recorder.Code)
@@ -445,7 +444,7 @@ func TestSearchPatients_DifferentHospitalID(t *testing.T) {
 // TestSearchPatients_NullableFields tests handling of nullable fields in response
 func TestSearchPatients_NullableFields(t *testing.T) {
 	mockPatientRepo := new(mocks.IPatientRepo)
-	logger := logrus.New()
+	
 
 	// Patient with some nullable fields as nil
 	patients := []model.Patient{
@@ -465,7 +464,7 @@ func TestSearchPatients_NullableFields(t *testing.T) {
 	engine, _ := setupGinContext(t)
 	recorder := httptest.NewRecorder()
 
-	engine.GET("/patient/search", SearchPatients(svc, logger))
+	engine.GET("/patient/search", SearchPatients(svc))
 
 	req := httptest.NewRequest("GET", "/patient/search", nil)
 	req.Header.Set("Content-Type", "application/json")
@@ -475,7 +474,7 @@ func TestSearchPatients_NullableFields(t *testing.T) {
 	c.Set("hospital_id", 5)
 	c.Set("staff_id", 1)
 
-	SearchPatients(svc, logger)(c)
+	SearchPatients(svc)(c)
 
 	if recorder.Code != http.StatusOK {
 		t.Errorf("expected status 200, got %d", recorder.Code)
@@ -498,7 +497,7 @@ func TestSearchPatients_NullableFields(t *testing.T) {
 // TestSearchPatientByID_Success tests successful patient lookup by ID
 func TestSearchPatientByID_Success(t *testing.T) {
 	mockPatientRepo := new(mocks.IPatientRepo)
-	logger := logrus.New()
+	
 
 	// Setup expectations
 	firstName := "John"
@@ -522,7 +521,7 @@ func TestSearchPatientByID_Success(t *testing.T) {
 	engine, _ := setupGinContext(t)
 	recorder := httptest.NewRecorder()
 
-	engine.GET("/patient/search/:id", SearchPatientByID(svc, logger))
+	engine.GET("/patient/search/:id", SearchPatientByID(svc))
 
 	req := httptest.NewRequest("GET", "/patient/search/1234567890123", nil)
 	engine.ServeHTTP(recorder, req)
@@ -550,7 +549,7 @@ func TestSearchPatientByID_Success(t *testing.T) {
 // TestSearchPatientByID_PatientNotFound tests 404 when patient not found
 func TestSearchPatientByID_PatientNotFound(t *testing.T) {
 	mockPatientRepo := new(mocks.IPatientRepo)
-	logger := logrus.New()
+	
 
 	// Setup expectations - return nil for not found
 	mockPatientRepo.On("GetPatientByID", "nonexistent").
@@ -560,7 +559,7 @@ func TestSearchPatientByID_PatientNotFound(t *testing.T) {
 	engine, _ := setupGinContext(t)
 	recorder := httptest.NewRecorder()
 
-	engine.GET("/patient/search/:id", SearchPatientByID(svc, logger))
+	engine.GET("/patient/search/:id", SearchPatientByID(svc))
 
 	req := httptest.NewRequest("GET", "/patient/search/nonexistent", nil)
 	engine.ServeHTTP(recorder, req)
@@ -588,13 +587,13 @@ func TestSearchPatientByID_PatientNotFound(t *testing.T) {
 // TestSearchPatientByID_EmptyID tests error for missing ID parameter
 func TestSearchPatientByID_EmptyID(t *testing.T) {
 	mockPatientRepo := new(mocks.IPatientRepo)
-	logger := logrus.New()
+	
 
 	svc := newPatientServiceWithMocks(mockPatientRepo)
 	engine, _ := setupGinContext(t)
 	recorder := httptest.NewRecorder()
 
-	engine.GET("/patient/search/:id", SearchPatientByID(svc, logger))
+	engine.GET("/patient/search/:id", SearchPatientByID(svc))
 
 	// Request without ID parameter - Gin will return empty string
 	req := httptest.NewRequest("GET", "/patient/search/", nil)
@@ -609,7 +608,7 @@ func TestSearchPatientByID_EmptyID(t *testing.T) {
 // TestSearchPatientByID_DatabaseError tests error handling for database failures
 func TestSearchPatientByID_DatabaseError(t *testing.T) {
 	mockPatientRepo := new(mocks.IPatientRepo)
-	logger := logrus.New()
+	
 
 	// Setup expectations - return error
 	mockPatientRepo.On("GetPatientByID", "1234567890123").
@@ -619,7 +618,7 @@ func TestSearchPatientByID_DatabaseError(t *testing.T) {
 	engine, _ := setupGinContext(t)
 	recorder := httptest.NewRecorder()
 
-	engine.GET("/patient/search/:id", SearchPatientByID(svc, logger))
+	engine.GET("/patient/search/:id", SearchPatientByID(svc))
 
 	req := httptest.NewRequest("GET", "/patient/search/1234567890123", nil)
 	engine.ServeHTTP(recorder, req)
@@ -647,7 +646,7 @@ func TestSearchPatientByID_DatabaseError(t *testing.T) {
 // TestSearchPatientByID_PassportID tests search by passport ID
 func TestSearchPatientByID_PassportID(t *testing.T) {
 	mockPatientRepo := new(mocks.IPatientRepo)
-	logger := logrus.New()
+	
 
 	// Setup expectations
 	firstName := "Jane"
@@ -667,7 +666,7 @@ func TestSearchPatientByID_PassportID(t *testing.T) {
 	engine, _ := setupGinContext(t)
 	recorder := httptest.NewRecorder()
 
-	engine.GET("/patient/search/:id", SearchPatientByID(svc, logger))
+	engine.GET("/patient/search/:id", SearchPatientByID(svc))
 
 	req := httptest.NewRequest("GET", "/patient/search/AB123456", nil)
 	engine.ServeHTTP(recorder, req)
@@ -691,7 +690,7 @@ func TestSearchPatientByID_PassportID(t *testing.T) {
 // TestSearchPatientByID_WithHyphens tests ID with hyphens
 func TestSearchPatientByID_WithHyphens(t *testing.T) {
 	mockPatientRepo := new(mocks.IPatientRepo)
-	logger := logrus.New()
+	
 
 	// Setup expectations with hyphens in ID
 	firstName := "John"
@@ -710,7 +709,7 @@ func TestSearchPatientByID_WithHyphens(t *testing.T) {
 	engine, _ := setupGinContext(t)
 	recorder := httptest.NewRecorder()
 
-	engine.GET("/patient/search/:id", SearchPatientByID(svc, logger))
+	engine.GET("/patient/search/:id", SearchPatientByID(svc))
 
 	req := httptest.NewRequest("GET", "/patient/search/"+hyphenID, nil)
 	engine.ServeHTTP(recorder, req)
@@ -725,7 +724,7 @@ func TestSearchPatientByID_WithHyphens(t *testing.T) {
 // TestSearchPatientByID_WithNullableFields tests patient with nullable fields
 func TestSearchPatientByID_WithNullableFields(t *testing.T) {
 	mockPatientRepo := new(mocks.IPatientRepo)
-	logger := logrus.New()
+	
 
 	// Setup expectations - patient with nil fields
 	patient := &model.Patient{
@@ -745,7 +744,7 @@ func TestSearchPatientByID_WithNullableFields(t *testing.T) {
 	engine, _ := setupGinContext(t)
 	recorder := httptest.NewRecorder()
 
-	engine.GET("/patient/search/:id", SearchPatientByID(svc, logger))
+	engine.GET("/patient/search/:id", SearchPatientByID(svc))
 
 	req := httptest.NewRequest("GET", "/patient/search/1234567890123", nil)
 	engine.ServeHTTP(recorder, req)
@@ -769,7 +768,7 @@ func TestSearchPatientByID_WithNullableFields(t *testing.T) {
 // TestSearchPatientByID_LongID tests search with a very long ID string
 func TestSearchPatientByID_LongID(t *testing.T) {
 	mockPatientRepo := new(mocks.IPatientRepo)
-	logger := logrus.New()
+	
 
 	// Create a long ID
 	longID := "123456789012345678901234567890123456789012345678901234567890"
@@ -788,7 +787,7 @@ func TestSearchPatientByID_LongID(t *testing.T) {
 	engine, _ := setupGinContext(t)
 	recorder := httptest.NewRecorder()
 
-	engine.GET("/patient/search/:id", SearchPatientByID(svc, logger))
+	engine.GET("/patient/search/:id", SearchPatientByID(svc))
 
 	req := httptest.NewRequest("GET", "/patient/search/"+longID, nil)
 	engine.ServeHTTP(recorder, req)
@@ -812,7 +811,7 @@ func TestSearchPatientByID_LongID(t *testing.T) {
 // TestSearchPatientByID_ResponseStructure tests complete response structure
 func TestSearchPatientByID_ResponseStructure(t *testing.T) {
 	mockPatientRepo := new(mocks.IPatientRepo)
-	logger := logrus.New()
+	
 
 	// Setup expectations with comprehensive patient data
 	firstName := "John"
@@ -844,7 +843,7 @@ func TestSearchPatientByID_ResponseStructure(t *testing.T) {
 	engine, _ := setupGinContext(t)
 	recorder := httptest.NewRecorder()
 
-	engine.GET("/patient/search/:id", SearchPatientByID(svc, logger))
+	engine.GET("/patient/search/:id", SearchPatientByID(svc))
 
 	req := httptest.NewRequest("GET", "/patient/search/1234567890123", nil)
 	engine.ServeHTTP(recorder, req)

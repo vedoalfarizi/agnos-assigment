@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/mock"
 	"github.com/vedoalfarizi/hospital-api/internal/dto"
 	"github.com/vedoalfarizi/hospital-api/internal/model"
@@ -49,7 +48,7 @@ func buildCreateStaffRequest(username, password string, hospitalID int) []byte {
 func TestCreateStaff_Success(t *testing.T) {
 	mockStaffRepo := new(mocks.IStaffRepo)
 	mockHospitalRepo := new(mocks.IHospitalRepo)
-	logger := logrus.New()
+	
 
 	// Setup expectations
 	mockHospitalRepo.On("HospitalExists", 1).Return(nil)
@@ -64,7 +63,7 @@ func TestCreateStaff_Success(t *testing.T) {
 	engine, recorder := setupGinContext(t)
 
 	// Register route
-	engine.POST("/staff/create", CreateStaff(svc, logger))
+	engine.POST("/staff/create", CreateStaff(svc))
 
 	// Build request
 	body := buildCreateStaffRequest("john_doe", "securepass123", 1)
@@ -101,13 +100,13 @@ func TestCreateStaff_Success(t *testing.T) {
 func TestCreateStaff_InvalidJSON(t *testing.T) {
 	mockStaffRepo := new(mocks.IStaffRepo)
 	mockHospitalRepo := new(mocks.IHospitalRepo)
-	logger := logrus.New()
+	
 
 	svc := newStaffServiceWithMocks(mockStaffRepo, mockHospitalRepo)
 	engine, _ := setupGinContext(t)
 	recorder := httptest.NewRecorder()
 
-	engine.POST("/staff/create", CreateStaff(svc, logger))
+	engine.POST("/staff/create", CreateStaff(svc))
 
 	// Send malformed JSON
 	req := httptest.NewRequest("POST", "/staff/create", bytes.NewReader([]byte(`{"invalid json`)))
@@ -138,13 +137,13 @@ func TestCreateStaff_InvalidJSON(t *testing.T) {
 func TestCreateStaff_MissingUsername(t *testing.T) {
 	mockStaffRepo := new(mocks.IStaffRepo)
 	mockHospitalRepo := new(mocks.IHospitalRepo)
-	logger := logrus.New()
+	
 
 	svc := newStaffServiceWithMocks(mockStaffRepo, mockHospitalRepo)
 	engine, _ := setupGinContext(t)
 	recorder := httptest.NewRecorder()
 
-	engine.POST("/staff/create", CreateStaff(svc, logger))
+	engine.POST("/staff/create", CreateStaff(svc))
 
 	// Missing username
 	body := buildCreateStaffRequest("", "securepass123", 1)
@@ -175,13 +174,13 @@ func TestCreateStaff_MissingUsername(t *testing.T) {
 func TestCreateStaff_InvalidUsernameFormat(t *testing.T) {
 	mockStaffRepo := new(mocks.IStaffRepo)
 	mockHospitalRepo := new(mocks.IHospitalRepo)
-	logger := logrus.New()
+	
 
 	svc := newStaffServiceWithMocks(mockStaffRepo, mockHospitalRepo)
 	engine, _ := setupGinContext(t)
 	recorder := httptest.NewRecorder()
 
-	engine.POST("/staff/create", CreateStaff(svc, logger))
+	engine.POST("/staff/create", CreateStaff(svc))
 
 	// Username too short (min=3)
 	body := buildCreateStaffRequest("ab", "securepass123", 1)
@@ -208,13 +207,13 @@ func TestCreateStaff_InvalidUsernameFormat(t *testing.T) {
 func TestCreateStaff_MissingPassword(t *testing.T) {
 	mockStaffRepo := new(mocks.IStaffRepo)
 	mockHospitalRepo := new(mocks.IHospitalRepo)
-	logger := logrus.New()
+	
 
 	svc := newStaffServiceWithMocks(mockStaffRepo, mockHospitalRepo)
 	engine, _ := setupGinContext(t)
 	recorder := httptest.NewRecorder()
 
-	engine.POST("/staff/create", CreateStaff(svc, logger))
+	engine.POST("/staff/create", CreateStaff(svc))
 
 	// Missing password
 	body := buildCreateStaffRequest("john_doe", "", 1)
@@ -241,13 +240,13 @@ func TestCreateStaff_MissingPassword(t *testing.T) {
 func TestCreateStaff_InvalidPasswordLength(t *testing.T) {
 	mockStaffRepo := new(mocks.IStaffRepo)
 	mockHospitalRepo := new(mocks.IHospitalRepo)
-	logger := logrus.New()
+	
 
 	svc := newStaffServiceWithMocks(mockStaffRepo, mockHospitalRepo)
 	engine, _ := setupGinContext(t)
 	recorder := httptest.NewRecorder()
 
-	engine.POST("/staff/create", CreateStaff(svc, logger))
+	engine.POST("/staff/create", CreateStaff(svc))
 
 	// Password too short (min=8)
 	body := buildCreateStaffRequest("john_doe", "short01", 1)
@@ -274,13 +273,13 @@ func TestCreateStaff_InvalidPasswordLength(t *testing.T) {
 func TestCreateStaff_MissingHospitalID(t *testing.T) {
 	mockStaffRepo := new(mocks.IStaffRepo)
 	mockHospitalRepo := new(mocks.IHospitalRepo)
-	logger := logrus.New()
+	
 
 	svc := newStaffServiceWithMocks(mockStaffRepo, mockHospitalRepo)
 	engine, _ := setupGinContext(t)
 	recorder := httptest.NewRecorder()
 
-	engine.POST("/staff/create", CreateStaff(svc, logger))
+	engine.POST("/staff/create", CreateStaff(svc))
 
 	// Invalid hospital_id (0)
 	body := buildCreateStaffRequest("john_doe", "securepass123", 0)
@@ -307,7 +306,7 @@ func TestCreateStaff_MissingHospitalID(t *testing.T) {
 func TestCreateStaff_HospitalNotFound(t *testing.T) {
 	mockStaffRepo := new(mocks.IStaffRepo)
 	mockHospitalRepo := new(mocks.IHospitalRepo)
-	logger := logrus.New()
+	
 
 	// Setup expectations: HospitalExists returns ErrNotFound
 	mockHospitalRepo.On("HospitalExists", 999).Return(repository.ErrNotFound)
@@ -316,7 +315,7 @@ func TestCreateStaff_HospitalNotFound(t *testing.T) {
 	engine, _ := setupGinContext(t)
 	recorder := httptest.NewRecorder()
 
-	engine.POST("/staff/create", CreateStaff(svc, logger))
+	engine.POST("/staff/create", CreateStaff(svc))
 
 	body := buildCreateStaffRequest("john_doe", "securepass123", 999)
 	req := httptest.NewRequest("POST", "/staff/create", bytes.NewReader(body))
@@ -349,7 +348,7 @@ func TestCreateStaff_HospitalNotFound(t *testing.T) {
 func TestCreateStaff_DuplicateUsername(t *testing.T) {
 	mockStaffRepo := new(mocks.IStaffRepo)
 	mockHospitalRepo := new(mocks.IHospitalRepo)
-	logger := logrus.New()
+	
 
 	// Setup expectations
 	mockHospitalRepo.On("HospitalExists", 1).Return(nil)
@@ -360,7 +359,7 @@ func TestCreateStaff_DuplicateUsername(t *testing.T) {
 	engine, _ := setupGinContext(t)
 	recorder := httptest.NewRecorder()
 
-	engine.POST("/staff/create", CreateStaff(svc, logger))
+	engine.POST("/staff/create", CreateStaff(svc))
 
 	body := buildCreateStaffRequest("john_doe", "securepass123", 1)
 	req := httptest.NewRequest("POST", "/staff/create", bytes.NewReader(body))
@@ -394,7 +393,7 @@ func TestCreateStaff_DuplicateUsername(t *testing.T) {
 func TestCreateStaff_DatabaseError(t *testing.T) {
 	mockStaffRepo := new(mocks.IStaffRepo)
 	mockHospitalRepo := new(mocks.IHospitalRepo)
-	logger := logrus.New()
+	
 
 	// Setup expectations
 	mockHospitalRepo.On("HospitalExists", 1).Return(nil)
@@ -405,7 +404,7 @@ func TestCreateStaff_DatabaseError(t *testing.T) {
 	engine, _ := setupGinContext(t)
 	recorder := httptest.NewRecorder()
 
-	engine.POST("/staff/create", CreateStaff(svc, logger))
+	engine.POST("/staff/create", CreateStaff(svc))
 
 	body := buildCreateStaffRequest("john_doe", "securepass123", 1)
 	req := httptest.NewRequest("POST", "/staff/create", bytes.NewReader(body))
@@ -439,7 +438,7 @@ func TestCreateStaff_DatabaseError(t *testing.T) {
 func TestCreateStaff_HospitalExistsError(t *testing.T) {
 	mockStaffRepo := new(mocks.IStaffRepo)
 	mockHospitalRepo := new(mocks.IHospitalRepo)
-	logger := logrus.New()
+	
 
 	// Setup expectations: HospitalExists returns generic error
 	mockHospitalRepo.On("HospitalExists", 1).Return(errors.New("database error"))
@@ -448,7 +447,7 @@ func TestCreateStaff_HospitalExistsError(t *testing.T) {
 	engine, _ := setupGinContext(t)
 	recorder := httptest.NewRecorder()
 
-	engine.POST("/staff/create", CreateStaff(svc, logger))
+	engine.POST("/staff/create", CreateStaff(svc))
 
 	body := buildCreateStaffRequest("john_doe", "securepass123", 1)
 	req := httptest.NewRequest("POST", "/staff/create", bytes.NewReader(body))
@@ -477,13 +476,13 @@ func TestCreateStaff_HospitalExistsError(t *testing.T) {
 func TestCreateStaff_NegativeHospitalID(t *testing.T) {
 	mockStaffRepo := new(mocks.IStaffRepo)
 	mockHospitalRepo := new(mocks.IHospitalRepo)
-	logger := logrus.New()
+	
 
 	svc := newStaffServiceWithMocks(mockStaffRepo, mockHospitalRepo)
 	engine, _ := setupGinContext(t)
 	recorder := httptest.NewRecorder()
 
-	engine.POST("/staff/create", CreateStaff(svc, logger))
+	engine.POST("/staff/create", CreateStaff(svc))
 
 	// Negative hospital_id
 	body := buildCreateStaffRequest("john_doe", "securepass123", -1)
@@ -510,13 +509,13 @@ func TestCreateStaff_NegativeHospitalID(t *testing.T) {
 func TestCreateStaff_EmptyRequest(t *testing.T) {
 	mockStaffRepo := new(mocks.IStaffRepo)
 	mockHospitalRepo := new(mocks.IHospitalRepo)
-	logger := logrus.New()
+	
 
 	svc := newStaffServiceWithMocks(mockStaffRepo, mockHospitalRepo)
 	engine, _ := setupGinContext(t)
 	recorder := httptest.NewRecorder()
 
-	engine.POST("/staff/create", CreateStaff(svc, logger))
+	engine.POST("/staff/create", CreateStaff(svc))
 
 	// Empty object
 	req := httptest.NewRequest("POST", "/staff/create", bytes.NewReader([]byte(`{}`)))
@@ -554,7 +553,7 @@ func buildLoginRequest(username, password string) []byte {
 func TestLoginStaff_Success(t *testing.T) {
 	mockStaffRepo := new(mocks.IStaffRepo)
 	mockHospitalRepo := new(mocks.IHospitalRepo)
-	logger := logrus.New()
+	
 
 	// Setup expectations - staff found with correct password hash
 	password := "securepass123"
@@ -575,7 +574,7 @@ func TestLoginStaff_Success(t *testing.T) {
 	engine, _ := setupGinContext(t)
 	recorder := httptest.NewRecorder()
 
-	engine.POST("/staff/login", LoginStaff(svc, logger))
+	engine.POST("/staff/login", LoginStaff(svc))
 
 	body := buildLoginRequest("john_doe", "securepass123")
 	req := httptest.NewRequest("POST", "/staff/login", bytes.NewReader(body))
@@ -625,13 +624,13 @@ func TestLoginStaff_Success(t *testing.T) {
 func TestLoginStaff_InvalidJSON(t *testing.T) {
 	mockStaffRepo := new(mocks.IStaffRepo)
 	mockHospitalRepo := new(mocks.IHospitalRepo)
-	logger := logrus.New()
+	
 
 	svc := newStaffServiceWithMocks(mockStaffRepo, mockHospitalRepo)
 	engine, _ := setupGinContext(t)
 	recorder := httptest.NewRecorder()
 
-	engine.POST("/staff/login", LoginStaff(svc, logger))
+	engine.POST("/staff/login", LoginStaff(svc))
 
 	req := httptest.NewRequest("POST", "/staff/login", bytes.NewReader([]byte(`{"invalid json`)))
 	req.Header.Set("Content-Type", "application/json")
@@ -656,13 +655,13 @@ func TestLoginStaff_InvalidJSON(t *testing.T) {
 func TestLoginStaff_MissingUsername(t *testing.T) {
 	mockStaffRepo := new(mocks.IStaffRepo)
 	mockHospitalRepo := new(mocks.IHospitalRepo)
-	logger := logrus.New()
+	
 
 	svc := newStaffServiceWithMocks(mockStaffRepo, mockHospitalRepo)
 	engine, _ := setupGinContext(t)
 	recorder := httptest.NewRecorder()
 
-	engine.POST("/staff/login", LoginStaff(svc, logger))
+	engine.POST("/staff/login", LoginStaff(svc))
 
 	body := buildLoginRequest("", "securepass123")
 	req := httptest.NewRequest("POST", "/staff/login", bytes.NewReader(body))
@@ -688,13 +687,13 @@ func TestLoginStaff_MissingUsername(t *testing.T) {
 func TestLoginStaff_InvalidUsernameLength(t *testing.T) {
 	mockStaffRepo := new(mocks.IStaffRepo)
 	mockHospitalRepo := new(mocks.IHospitalRepo)
-	logger := logrus.New()
+	
 
 	svc := newStaffServiceWithMocks(mockStaffRepo, mockHospitalRepo)
 	engine, _ := setupGinContext(t)
 	recorder := httptest.NewRecorder()
 
-	engine.POST("/staff/login", LoginStaff(svc, logger))
+	engine.POST("/staff/login", LoginStaff(svc))
 
 	// Username too short (min=3)
 	body := buildLoginRequest("ab", "securepass123")
@@ -721,13 +720,13 @@ func TestLoginStaff_InvalidUsernameLength(t *testing.T) {
 func TestLoginStaff_MissingPassword(t *testing.T) {
 	mockStaffRepo := new(mocks.IStaffRepo)
 	mockHospitalRepo := new(mocks.IHospitalRepo)
-	logger := logrus.New()
+	
 
 	svc := newStaffServiceWithMocks(mockStaffRepo, mockHospitalRepo)
 	engine, _ := setupGinContext(t)
 	recorder := httptest.NewRecorder()
 
-	engine.POST("/staff/login", LoginStaff(svc, logger))
+	engine.POST("/staff/login", LoginStaff(svc))
 
 	body := buildLoginRequest("john_doe", "")
 	req := httptest.NewRequest("POST", "/staff/login", bytes.NewReader(body))
@@ -753,13 +752,13 @@ func TestLoginStaff_MissingPassword(t *testing.T) {
 func TestLoginStaff_InvalidPasswordLength(t *testing.T) {
 	mockStaffRepo := new(mocks.IStaffRepo)
 	mockHospitalRepo := new(mocks.IHospitalRepo)
-	logger := logrus.New()
+	
 
 	svc := newStaffServiceWithMocks(mockStaffRepo, mockHospitalRepo)
 	engine, _ := setupGinContext(t)
 	recorder := httptest.NewRecorder()
 
-	engine.POST("/staff/login", LoginStaff(svc, logger))
+	engine.POST("/staff/login", LoginStaff(svc))
 
 	// Password too short (min=8)
 	body := buildLoginRequest("john_doe", "short01")
@@ -786,13 +785,13 @@ func TestLoginStaff_InvalidPasswordLength(t *testing.T) {
 func TestLoginStaff_EmptyRequest(t *testing.T) {
 	mockStaffRepo := new(mocks.IStaffRepo)
 	mockHospitalRepo := new(mocks.IHospitalRepo)
-	logger := logrus.New()
+	
 
 	svc := newStaffServiceWithMocks(mockStaffRepo, mockHospitalRepo)
 	engine, _ := setupGinContext(t)
 	recorder := httptest.NewRecorder()
 
-	engine.POST("/staff/login", LoginStaff(svc, logger))
+	engine.POST("/staff/login", LoginStaff(svc))
 
 	req := httptest.NewRequest("POST", "/staff/login", bytes.NewReader([]byte(`{}`)))
 	req.Header.Set("Content-Type", "application/json")
@@ -817,7 +816,7 @@ func TestLoginStaff_EmptyRequest(t *testing.T) {
 func TestLoginStaff_UserNotFound(t *testing.T) {
 	mockStaffRepo := new(mocks.IStaffRepo)
 	mockHospitalRepo := new(mocks.IHospitalRepo)
-	logger := logrus.New()
+	
 
 	// Setup expectations - user not found
 	mockStaffRepo.On("GetByUsername", "nonexistent").
@@ -827,7 +826,7 @@ func TestLoginStaff_UserNotFound(t *testing.T) {
 	engine, _ := setupGinContext(t)
 	recorder := httptest.NewRecorder()
 
-	engine.POST("/staff/login", LoginStaff(svc, logger))
+	engine.POST("/staff/login", LoginStaff(svc))
 
 	body := buildLoginRequest("nonexistent", "securepass123")
 	req := httptest.NewRequest("POST", "/staff/login", bytes.NewReader(body))
@@ -860,7 +859,7 @@ func TestLoginStaff_UserNotFound(t *testing.T) {
 func TestLoginStaff_InvalidPassword(t *testing.T) {
 	mockStaffRepo := new(mocks.IStaffRepo)
 	mockHospitalRepo := new(mocks.IHospitalRepo)
-	logger := logrus.New()
+	
 
 	// Setup expectations - user found but password doesn't match
 	password := "securepass123"
@@ -881,7 +880,7 @@ func TestLoginStaff_InvalidPassword(t *testing.T) {
 	engine, _ := setupGinContext(t)
 	recorder := httptest.NewRecorder()
 
-	engine.POST("/staff/login", LoginStaff(svc, logger))
+	engine.POST("/staff/login", LoginStaff(svc))
 
 	// Wrong password
 	body := buildLoginRequest("john_doe", "wrongpassword1")
@@ -911,7 +910,7 @@ func TestLoginStaff_InvalidPassword(t *testing.T) {
 func TestLoginStaff_DatabaseError(t *testing.T) {
 	mockStaffRepo := new(mocks.IStaffRepo)
 	mockHospitalRepo := new(mocks.IHospitalRepo)
-	logger := logrus.New()
+	
 
 	// Setup expectations - database error
 	mockStaffRepo.On("GetByUsername", "john_doe").
@@ -921,7 +920,7 @@ func TestLoginStaff_DatabaseError(t *testing.T) {
 	engine, _ := setupGinContext(t)
 	recorder := httptest.NewRecorder()
 
-	engine.POST("/staff/login", LoginStaff(svc, logger))
+	engine.POST("/staff/login", LoginStaff(svc))
 
 	body := buildLoginRequest("john_doe", "securepass123")
 	req := httptest.NewRequest("POST", "/staff/login", bytes.NewReader(body))

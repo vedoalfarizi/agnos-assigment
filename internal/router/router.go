@@ -6,13 +6,12 @@ import (
 
 	"github.com/vedoalfarizi/hospital-api/internal/config"
 	"github.com/vedoalfarizi/hospital-api/internal/handler"
-	"github.com/vedoalfarizi/hospital-api/internal/logger"
 	"github.com/vedoalfarizi/hospital-api/internal/middleware"
 	"github.com/vedoalfarizi/hospital-api/internal/repository"
 	"github.com/vedoalfarizi/hospital-api/internal/service"
 )
 
-func New(log *logger.Logger, cfg *config.Config, db *sqlx.DB) *gin.Engine {
+func New(cfg *config.Config, db *sqlx.DB) *gin.Engine {
 	if cfg.AppEnv == "production" {
 		gin.SetMode(gin.ReleaseMode)
 	} else {
@@ -42,18 +41,18 @@ func New(log *logger.Logger, cfg *config.Config, db *sqlx.DB) *gin.Engine {
 	api := r.Group("/api")
 	{
 		// public health endpoint
-		api.GET("/health", handler.HealthCheck(healthSvc, log.Logger))
+		api.GET("/health", handler.HealthCheck(healthSvc))
 
 		// staff create endpoint (public)
-		api.POST("/staff/create", handler.CreateStaff(staffSvc, log.Logger))
+		api.POST("/staff/create", handler.CreateStaff(staffSvc))
 		// staff login endpoint (public)
-		api.POST("/staff/login", handler.LoginStaff(staffSvc, log.Logger))
+		api.POST("/staff/login", handler.LoginStaff(staffSvc))
 
 		// Public patient search by ID endpoint
-		api.GET("/patient/search/:id", handler.SearchPatientByID(patientSvc, log.Logger))
+		api.GET("/patient/search/:id", handler.SearchPatientByID(patientSvc))
 
 		// Protected patient endpoints (require auth)
-		api.GET("/patient/search", authMiddleware, handler.SearchPatients(patientSvc, log.Logger))
+		api.GET("/patient/search", authMiddleware, handler.SearchPatients(patientSvc))
 	}
 
 	return r

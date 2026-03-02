@@ -2,8 +2,8 @@ package handler
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 
+	"github.com/vedoalfarizi/hospital-api/internal/logger"
 	"github.com/vedoalfarizi/hospital-api/internal/service"
 )
 
@@ -16,7 +16,7 @@ type HealthCheckResponse struct {
 // HealthCheck returns a Gin handler that uses the provided service.
 // creating the handler via a constructor makes it easy to supply mocks during
 // unit testing.
-func HealthCheck(svc *service.HealthService, log *logrus.Logger) gin.HandlerFunc {
+func HealthCheck(svc *service.HealthService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		serverStatus := "up"
 		databaseStatus := "up"
@@ -26,7 +26,7 @@ func HealthCheck(svc *service.HealthService, log *logrus.Logger) gin.HandlerFunc
 			// database ping failed, mark unhealthy and log error for engineers
 			databaseStatus = "down"
 			overall = "unhealthy"
-			log.Errorf("database health check failed: %v", err)
+			logger.Errorf("database health check failed: %v", err)
 		}
 
 		resp := HealthCheckResponse{

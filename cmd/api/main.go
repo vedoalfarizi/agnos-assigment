@@ -6,6 +6,8 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/vedoalfarizi/hospital-api/internal/logger"
 )
 
 func main() {
@@ -24,24 +26,24 @@ func main() {
 	serverErrChan := make(chan error, 1)
 	go func() {
 		addr := bootstrap.GetServerAddr()
-		bootstrap.Logger.Infof("Starting server on %s", addr)
+		logger.Infof("Starting server on %s", addr)
 		serverErrChan <- bootstrap.Router.Run(addr)
 	}()
 
 	// Wait for either server error or shutdown signal
 	select {
 	case sig := <-sigChan:
-		bootstrap.Logger.Infof("Received signal: %v", sig)
+		logger.Infof("Received signal: %v", sig)
 		// Gracefully shutdown
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 		if err := bootstrap.Shutdown(ctx); err != nil {
-			bootstrap.Logger.Errorf("Shutdown error: %v", err)
+			logger.Errorf("Shutdown error: %v", err)
 			os.Exit(1)
 		}
 	case err := <-serverErrChan:
 		if err != nil {
-			bootstrap.Logger.Errorf("Server error: %v", err)
+			logger.Errorf("Server error: %v", err)
 			os.Exit(1)
 		}
 	}
