@@ -20,6 +20,7 @@ help:
 	@echo "Docker Compose (Full Stack):"
 	@echo "  make docker-up        - Start all services (postgres → migrate → api → nginx)"
 	@echo "  make docker-down      - Stop all services"
+	@echo "  make docker-rebuild   - Reset services (stop, rebuild without cache, start)"
 	@echo "  make docker-logs      - View all services logs"
 	@echo ""
 
@@ -101,6 +102,13 @@ docker-up:
 docker-down:
 	@echo "Stopping all services..."
 	docker-compose down
+
+docker-rebuild:
+	@echo "Resetting services (bringing down and rebuilding)..."
+	docker-compose down
+	@echo "Rebuilding all services (clearing cache)..."
+	docker-compose build --no-cache
+	docker-compose up
 
 docker-logs:
 	@echo "Showing all services logs..."
