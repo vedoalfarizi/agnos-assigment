@@ -12,31 +12,33 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "http://localhost:8081/health",
+          "raw": "http://localhost:8080/api/health",
           "protocol": "http",
           "host": [
             "localhost"
           ],
-          "port": "8081",
+          "port": "8080",
           "path": [
+            "api",
             "health"
           ]
         }
       },
       "response": [
         {
-          "name": "OK",
+          "name": "200",
           "originalRequest": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "http://localhost:8080/health",
+              "raw": "http://localhost:8080/api/health",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
+                "api",
                 "health"
               ]
             }
@@ -51,7 +53,7 @@
             },
             {
               "key": "Date",
-              "value": "Sun, 01 Mar 2026 12:31:03 GMT"
+              "value": "Mon, 02 Mar 2026 00:31:24 GMT"
             },
             {
               "key": "Content-Length",
@@ -78,13 +80,14 @@
           }
         },
         "url": {
-          "raw": "http://localhost:8081/staff/create",
+          "raw": "http://localhost:8080/api/staff/create",
           "protocol": "http",
           "host": [
             "localhost"
           ],
-          "port": "8081",
+          "port": "8080",
           "path": [
+            "api",
             "staff",
             "create"
           ]
@@ -92,7 +95,7 @@
       },
       "response": [
         {
-          "name": "404 hospital",
+          "name": "404 hospital not exist",
           "originalRequest": {
             "method": "POST",
             "header": [],
@@ -106,13 +109,14 @@
               }
             },
             "url": {
-              "raw": "http://localhost:8081/staff/create",
+              "raw": "http://localhost:8080/api/staff/create",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
-              "port": "8081",
+              "port": "8080",
               "path": [
+                "api",
                 "staff",
                 "create"
               ]
@@ -128,7 +132,7 @@
             },
             {
               "key": "Date",
-              "value": "Sun, 01 Mar 2026 13:14:32 GMT"
+              "value": "Mon, 02 Mar 2026 00:34:54 GMT"
             },
             {
               "key": "Content-Length",
@@ -153,13 +157,14 @@
               }
             },
             "url": {
-              "raw": "http://localhost:8081/staff/create",
+              "raw": "http://localhost:8080/api/staff/create",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
-              "port": "8081",
+              "port": "8080",
               "path": [
+                "api",
                 "staff",
                 "create"
               ]
@@ -175,7 +180,7 @@
             },
             {
               "key": "Date",
-              "value": "Sun, 01 Mar 2026 13:16:47 GMT"
+              "value": "Mon, 02 Mar 2026 00:37:57 GMT"
             },
             {
               "key": "Content-Length",
@@ -184,6 +189,54 @@
           ],
           "cookie": [],
           "body": "{\n    \"success\": true,\n    \"data\": {\n        \"hospital_id\": 1,\n        \"id\": 1,\n        \"username\": \"vedoalfarizi\"\n    }\n}"
+        },
+        {
+          "name": "409 duplicate staff",
+          "originalRequest": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"username\": \"vedoalfarizi\",\n    \"password\": \"1sampai8\",\n    \"hospital_id\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/staff/create",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "staff",
+                "create"
+              ]
+            }
+          },
+          "status": "Conflict",
+          "code": 409,
+          "_postman_previewlanguage": null,
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json; charset=utf-8"
+            },
+            {
+              "key": "Date",
+              "value": "Mon, 02 Mar 2026 00:38:24 GMT"
+            },
+            {
+              "key": "Content-Length",
+              "value": "91"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"success\": false,\n    \"error\": {\n        \"code\": \"DUPLICATE_USERNAME\",\n        \"message\": \"Username already exists\"\n    }\n}"
         }
       ]
     },
@@ -202,13 +255,14 @@
           }
         },
         "url": {
-          "raw": "http://localhost:8081/staff/login",
+          "raw": "http://localhost:8080/api/staff/login",
           "protocol": "http",
           "host": [
             "localhost"
           ],
-          "port": "8081",
+          "port": "8080",
           "path": [
+            "api",
             "staff",
             "login"
           ]
@@ -222,7 +276,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"username\": \"vedoalfarizi\",\n    \"password\": \"12345678\"\n}",
+              "raw": "{\n    \"username\": \"vedoalfarizii\",\n    \"password\": \"1sampai8\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -230,13 +284,14 @@
               }
             },
             "url": {
-              "raw": "http://localhost:8081/staff/login",
+              "raw": "http://localhost:8080/api/staff/login",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
-              "port": "8081",
+              "port": "8080",
               "path": [
+                "api",
                 "staff",
                 "login"
               ]
@@ -252,7 +307,7 @@
             },
             {
               "key": "Date",
-              "value": "Sun, 01 Mar 2026 14:56:46 GMT"
+              "value": "Mon, 02 Mar 2026 00:39:01 GMT"
             },
             {
               "key": "Content-Length",
@@ -277,13 +332,14 @@
               }
             },
             "url": {
-              "raw": "http://localhost:8081/staff/login",
+              "raw": "http://localhost:8080/api/staff/login",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
-              "port": "8081",
+              "port": "8080",
               "path": [
+                "api",
                 "staff",
                 "login"
               ]
@@ -299,7 +355,7 @@
             },
             {
               "key": "Date",
-              "value": "Sun, 01 Mar 2026 14:56:58 GMT"
+              "value": "Mon, 02 Mar 2026 00:39:22 GMT"
             },
             {
               "key": "Content-Length",
@@ -307,7 +363,7 @@
             }
           ],
           "cookie": [],
-          "body": "{\n    \"success\": true,\n    \"data\": {\n        \"access_token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NzQ5NjkwMTgsImhvc3BpdGFsX2lkIjoxLCJzdGFmZl9pZCI6MX0.2Xe8JqEqPstAN06t8bp84PPGsayf95aVvfchKNgjRbw\",\n        \"token_type\": \"Bearer\",\n        \"expires_in\": 2592000\n    }\n}"
+          "body": "{\n    \"success\": true,\n    \"data\": {\n        \"access_token\": \"\",\n        \"token_type\": \"Bearer\",\n        \"expires_in\": 2592000\n    }\n}"
         }
       ]
     },
@@ -319,7 +375,7 @@
           "bearer": [
             {
               "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NzQ5NjkwMTgsImhvc3BpdGFsX2lkIjoxLCJzdGFmZl9pZCI6MX0.2Xe8JqEqPstAN06t8bp84PPGsayf95aVvfchKNgjRbw",
+              "value": "xxxxxxxxxx",
               "type": "string"
             }
           ]
@@ -327,13 +383,14 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "http://localhost:8081/patient/search",
+          "raw": "http://localhost:8080/api/patient/search",
           "protocol": "http",
           "host": [
             "localhost"
           ],
-          "port": "8081",
+          "port": "8080",
           "path": [
+            "api",
             "patient",
             "search"
           ],
@@ -393,58 +450,73 @@
       },
       "response": [
         {
-          "name": "401",
+          "name": "200",
           "originalRequest": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "http://localhost:8081/patient/search",
+              "raw": "http://localhost:8080/api/patient/search",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
-              "port": "8081",
+              "port": "8080",
               "path": [
+                "api",
                 "patient",
                 "search"
-              ]
-            }
-          },
-          "status": "Unauthorized",
-          "code": 401,
-          "_postman_previewlanguage": null,
-          "header": [
-            {
-              "key": "Content-Type",
-              "value": "application/json; charset=utf-8"
-            },
-            {
-              "key": "Date",
-              "value": "Sun, 01 Mar 2026 15:28:46 GMT"
-            },
-            {
-              "key": "Content-Length",
-              "value": "102"
-            }
-          ],
-          "cookie": [],
-          "body": "{\n    \"success\": false,\n    \"error\": {\n        \"code\": \"UNAUTHORIZED\",\n        \"message\": \"Authentication required or token invalid\"\n    }\n}"
-        },
-        {
-          "name": "200 but empty result",
-          "originalRequest": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "http://localhost:8081/patient/search",
-              "protocol": "http",
-              "host": [
-                "localhost"
               ],
-              "port": "8081",
-              "path": [
-                "patient",
-                "search"
+              "query": [
+                {
+                  "key": "national_id",
+                  "value": "162534",
+                  "description": "exact match",
+                  "disabled": true
+                },
+                {
+                  "key": "passport_id",
+                  "value": "ID12345",
+                  "description": "exact match",
+                  "disabled": true
+                },
+                {
+                  "key": "first_name",
+                  "value": "salman",
+                  "description": "substring match incase-sensitive",
+                  "disabled": true
+                },
+                {
+                  "key": "middle_name",
+                  "value": "salman",
+                  "description": "substring match incase-sensitive",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "last_name",
+                  "value": "alfarizi",
+                  "description": "substring match incase-sensitive",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "date_of_birth",
+                  "value": "1997-03-01",
+                  "description": "exact match",
+                  "disabled": true
+                },
+                {
+                  "key": "phone_number",
+                  "value": "6282266663333",
+                  "description": "exact match",
+                  "disabled": true
+                },
+                {
+                  "key": "email",
+                  "value": "salman@gmail.com",
+                  "description": "exact match",
+                  "disabled": true
+                }
               ]
             }
           },
@@ -458,29 +530,30 @@
             },
             {
               "key": "Date",
-              "value": "Sun, 01 Mar 2026 15:29:05 GMT"
+              "value": "Mon, 02 Mar 2026 00:40:45 GMT"
             },
             {
               "key": "Content-Length",
-              "value": "26"
+              "value": "326"
             }
           ],
           "cookie": [],
-          "body": "{\n    \"success\": true,\n    \"data\": []\n}"
+          "body": "{\n    \"success\": true,\n    \"data\": [\n        {\n            \"id\": 2,\n            \"hospital_id\": 1,\n            \"first_name_en\": \"arief\",\n            \"middle_name_en\": null,\n            \"last_name_en\": \"putra\",\n            \"first_name_th\": null,\n            \"middle_name_th\": null,\n            \"last_name_th\": null,\n            \"national_id\": \"162654\",\n            \"passport_id\": \"ID12456\",\n            \"phone_number\": \"6282266664444\",\n            \"email\": \"arfptr@gmail.com\",\n            \"date_of_birth\": \"1997-03-10T00:00:00Z\"\n        }\n    ]\n}"
         },
         {
-          "name": "200",
+          "name": "200 empty",
           "originalRequest": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "http://localhost:8081/patient/search?national_id=162534&passport_id=ID12345&first_name=salman&date_of_birth=1997-03-01&phone_number=6282266663333&email=salman@gmail.com",
+              "raw": "http://localhost:8080/api/patient/search?first_name=salman",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
-              "port": "8081",
+              "port": "8080",
               "path": [
+                "api",
                 "patient",
                 "search"
               ],
@@ -488,12 +561,14 @@
                 {
                   "key": "national_id",
                   "value": "162534",
-                  "description": "exact match"
+                  "description": "exact match",
+                  "disabled": true
                 },
                 {
                   "key": "passport_id",
                   "value": "ID12345",
-                  "description": "exact match"
+                  "description": "exact match",
+                  "disabled": true
                 },
                 {
                   "key": "first_name",
@@ -517,17 +592,20 @@
                 {
                   "key": "date_of_birth",
                   "value": "1997-03-01",
-                  "description": "exact match"
+                  "description": "exact match",
+                  "disabled": true
                 },
                 {
                   "key": "phone_number",
                   "value": "6282266663333",
-                  "description": "exact match"
+                  "description": "exact match",
+                  "disabled": true
                 },
                 {
                   "key": "email",
                   "value": "salman@gmail.com",
-                  "description": "exact match"
+                  "description": "exact match",
+                  "disabled": true
                 }
               ]
             }
@@ -542,15 +620,106 @@
             },
             {
               "key": "Date",
-              "value": "Sun, 01 Mar 2026 15:37:53 GMT"
+              "value": "Mon, 02 Mar 2026 00:41:06 GMT"
             },
             {
               "key": "Content-Length",
-              "value": "330"
+              "value": "26"
             }
           ],
           "cookie": [],
-          "body": "{\n    \"success\": true,\n    \"data\": [\n        {\n            \"id\": 1,\n            \"hospital_id\": 1,\n            \"first_name_en\": \"salman\",\n            \"middle_name_en\": null,\n            \"last_name_en\": \"alfarizi\",\n            \"first_name_th\": null,\n            \"middle_name_th\": null,\n            \"last_name_th\": null,\n            \"national_id\": \"162534\",\n            \"passport_id\": \"ID12345\",\n            \"phone_number\": \"6282266663333\",\n            \"email\": \"salman@gmail.com\",\n            \"date_of_birth\": \"1997-03-01T00:00:00Z\"\n        }\n    ]\n}"
+          "body": "{\n    \"success\": true,\n    \"data\": []\n}"
+        },
+        {
+          "name": "401",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/api/patient/search",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "patient",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "national_id",
+                  "value": "162534",
+                  "description": "exact match",
+                  "disabled": true
+                },
+                {
+                  "key": "passport_id",
+                  "value": "ID12345",
+                  "description": "exact match",
+                  "disabled": true
+                },
+                {
+                  "key": "first_name",
+                  "value": "salman",
+                  "description": "substring match incase-sensitive",
+                  "disabled": true
+                },
+                {
+                  "key": "middle_name",
+                  "value": "salman",
+                  "description": "substring match incase-sensitive",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "last_name",
+                  "value": "alfarizi",
+                  "description": "substring match incase-sensitive",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "date_of_birth",
+                  "value": "1997-03-01",
+                  "description": "exact match",
+                  "disabled": true
+                },
+                {
+                  "key": "phone_number",
+                  "value": "6282266663333",
+                  "description": "exact match",
+                  "disabled": true
+                },
+                {
+                  "key": "email",
+                  "value": "salman@gmail.com",
+                  "description": "exact match",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "status": "Unauthorized",
+          "code": 401,
+          "_postman_previewlanguage": null,
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json; charset=utf-8"
+            },
+            {
+              "key": "Date",
+              "value": "Mon, 02 Mar 2026 00:41:26 GMT"
+            },
+            {
+              "key": "Content-Length",
+              "value": "102"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"success\": false,\n    \"error\": {\n        \"code\": \"UNAUTHORIZED\",\n        \"message\": \"Authentication required or token invalid\"\n    }\n}"
         }
       ]
     },
@@ -560,13 +729,14 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "http://localhost:8081/patient/search/:id",
+          "raw": "http://localhost:8080/api/patient/search/:id",
           "protocol": "http",
           "host": [
             "localhost"
           ],
-          "port": "8081",
+          "port": "8080",
           "path": [
+            "api",
             "patient",
             "search",
             ":id"
@@ -574,7 +744,7 @@
           "variable": [
             {
               "key": "id",
-              "value": "162534"
+              "value": "ID12456"
             }
           ]
         }
@@ -586,13 +756,14 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "http://localhost:8081/patient/search/:id",
+              "raw": "http://localhost:8080/api/patient/search/:id",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
-              "port": "8081",
+              "port": "8080",
               "path": [
+                "api",
                 "patient",
                 "search",
                 ":id"
@@ -600,7 +771,7 @@
               "variable": [
                 {
                   "key": "id",
-                  "value": "123654"
+                  "value": "162534"
                 }
               ]
             }
@@ -615,7 +786,7 @@
             },
             {
               "key": "Date",
-              "value": "Sun, 01 Mar 2026 16:00:28 GMT"
+              "value": "Mon, 02 Mar 2026 00:41:52 GMT"
             },
             {
               "key": "Content-Length",
@@ -631,13 +802,14 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "http://localhost:8081/patient/search/:id",
+              "raw": "http://localhost:8080/api/patient/search/:id",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
-              "port": "8081",
+              "port": "8080",
               "path": [
+                "api",
                 "patient",
                 "search",
                 ":id"
@@ -645,7 +817,7 @@
               "variable": [
                 {
                   "key": "id",
-                  "value": "162534"
+                  "value": "ID12456"
                 }
               ]
             }
@@ -660,15 +832,15 @@
             },
             {
               "key": "Date",
-              "value": "Sun, 01 Mar 2026 16:23:00 GMT"
+              "value": "Mon, 02 Mar 2026 00:42:09 GMT"
             },
             {
               "key": "Content-Length",
-              "value": "331"
+              "value": "329"
             }
           ],
           "cookie": [],
-          "body": "{\n    \"success\": true,\n    \"data\": {\n        \"first_name_th\": null,\n        \"middle_name_th\": null,\n        \"last_name_th\": null,\n        \"first_name_en\": \"salman\",\n        \"middle_name_en\": null,\n        \"last_name_en\": \"alfarizi\",\n        \"date_of_birth\": \"1997-03-01\",\n        \"patient_hn\": \"Hermina\",\n        \"national_id\": \"162534\",\n        \"passport_id\": \"ID12345\",\n        \"phone_number\": \"6282266663333\",\n        \"email\": \"salman@gmail.com\",\n        \"gender\": \"M\"\n    }\n}"
+          "body": "{\n    \"success\": true,\n    \"data\": {\n        \"first_name_th\": null,\n        \"middle_name_th\": null,\n        \"last_name_th\": null,\n        \"first_name_en\": \"arief\",\n        \"middle_name_en\": null,\n        \"last_name_en\": \"putra\",\n        \"date_of_birth\": \"1997-03-10\",\n        \"patient_hn\": \"Ibnu Sina\",\n        \"national_id\": \"162654\",\n        \"passport_id\": \"ID12456\",\n        \"phone_number\": \"6282266664444\",\n        \"email\": \"arfptr@gmail.com\",\n        \"gender\": \"M\"\n    }\n}"
         }
       ]
     }
