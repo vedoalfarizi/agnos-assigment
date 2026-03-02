@@ -48,7 +48,6 @@ func buildCreateStaffRequest(username, password string, hospitalID int) []byte {
 func TestCreateStaff_Success(t *testing.T) {
 	mockStaffRepo := new(mocks.IStaffRepo)
 	mockHospitalRepo := new(mocks.IHospitalRepo)
-	
 
 	mockHospitalRepo.On("HospitalExists", 1).Return(nil)
 	mockStaffRepo.On("CreateStaff", mock.AnythingOfType("*model.Staff")).
@@ -95,7 +94,6 @@ func TestCreateStaff_Success(t *testing.T) {
 func TestCreateStaff_InvalidJSON(t *testing.T) {
 	mockStaffRepo := new(mocks.IStaffRepo)
 	mockHospitalRepo := new(mocks.IHospitalRepo)
-	
 
 	svc := newStaffServiceWithMocks(mockStaffRepo, mockHospitalRepo)
 	engine, _ := setupGinContext(t)
@@ -132,7 +130,6 @@ func TestCreateStaff_InvalidJSON(t *testing.T) {
 func TestCreateStaff_MissingUsername(t *testing.T) {
 	mockStaffRepo := new(mocks.IStaffRepo)
 	mockHospitalRepo := new(mocks.IHospitalRepo)
-	
 
 	svc := newStaffServiceWithMocks(mockStaffRepo, mockHospitalRepo)
 	engine, _ := setupGinContext(t)
@@ -169,7 +166,6 @@ func TestCreateStaff_MissingUsername(t *testing.T) {
 func TestCreateStaff_InvalidUsernameFormat(t *testing.T) {
 	mockStaffRepo := new(mocks.IStaffRepo)
 	mockHospitalRepo := new(mocks.IHospitalRepo)
-	
 
 	svc := newStaffServiceWithMocks(mockStaffRepo, mockHospitalRepo)
 	engine, _ := setupGinContext(t)
@@ -202,7 +198,6 @@ func TestCreateStaff_InvalidUsernameFormat(t *testing.T) {
 func TestCreateStaff_MissingPassword(t *testing.T) {
 	mockStaffRepo := new(mocks.IStaffRepo)
 	mockHospitalRepo := new(mocks.IHospitalRepo)
-	
 
 	svc := newStaffServiceWithMocks(mockStaffRepo, mockHospitalRepo)
 	engine, _ := setupGinContext(t)
@@ -235,7 +230,6 @@ func TestCreateStaff_MissingPassword(t *testing.T) {
 func TestCreateStaff_InvalidPasswordLength(t *testing.T) {
 	mockStaffRepo := new(mocks.IStaffRepo)
 	mockHospitalRepo := new(mocks.IHospitalRepo)
-	
 
 	svc := newStaffServiceWithMocks(mockStaffRepo, mockHospitalRepo)
 	engine, _ := setupGinContext(t)
@@ -268,7 +262,6 @@ func TestCreateStaff_InvalidPasswordLength(t *testing.T) {
 func TestCreateStaff_MissingHospitalID(t *testing.T) {
 	mockStaffRepo := new(mocks.IStaffRepo)
 	mockHospitalRepo := new(mocks.IHospitalRepo)
-	
 
 	svc := newStaffServiceWithMocks(mockStaffRepo, mockHospitalRepo)
 	engine, _ := setupGinContext(t)
@@ -301,7 +294,6 @@ func TestCreateStaff_MissingHospitalID(t *testing.T) {
 func TestCreateStaff_HospitalNotFound(t *testing.T) {
 	mockStaffRepo := new(mocks.IStaffRepo)
 	mockHospitalRepo := new(mocks.IHospitalRepo)
-	
 
 	// Setup expectations: HospitalExists returns ErrNotFound
 	mockHospitalRepo.On("HospitalExists", 999).Return(repository.ErrNotFound)
@@ -343,7 +335,6 @@ func TestCreateStaff_HospitalNotFound(t *testing.T) {
 func TestCreateStaff_DuplicateUsername(t *testing.T) {
 	mockStaffRepo := new(mocks.IStaffRepo)
 	mockHospitalRepo := new(mocks.IHospitalRepo)
-	
 
 	// Setup expectations
 	mockHospitalRepo.On("HospitalExists", 1).Return(nil)
@@ -388,7 +379,6 @@ func TestCreateStaff_DuplicateUsername(t *testing.T) {
 func TestCreateStaff_DatabaseError(t *testing.T) {
 	mockStaffRepo := new(mocks.IStaffRepo)
 	mockHospitalRepo := new(mocks.IHospitalRepo)
-	
 
 	// Setup expectations
 	mockHospitalRepo.On("HospitalExists", 1).Return(nil)
@@ -433,7 +423,6 @@ func TestCreateStaff_DatabaseError(t *testing.T) {
 func TestCreateStaff_HospitalExistsError(t *testing.T) {
 	mockStaffRepo := new(mocks.IStaffRepo)
 	mockHospitalRepo := new(mocks.IHospitalRepo)
-	
 
 	// Setup expectations: HospitalExists returns generic error
 	mockHospitalRepo.On("HospitalExists", 1).Return(errors.New("database error"))
@@ -471,7 +460,6 @@ func TestCreateStaff_HospitalExistsError(t *testing.T) {
 func TestCreateStaff_NegativeHospitalID(t *testing.T) {
 	mockStaffRepo := new(mocks.IStaffRepo)
 	mockHospitalRepo := new(mocks.IHospitalRepo)
-	
 
 	svc := newStaffServiceWithMocks(mockStaffRepo, mockHospitalRepo)
 	engine, _ := setupGinContext(t)
@@ -504,7 +492,6 @@ func TestCreateStaff_NegativeHospitalID(t *testing.T) {
 func TestCreateStaff_EmptyRequest(t *testing.T) {
 	mockStaffRepo := new(mocks.IStaffRepo)
 	mockHospitalRepo := new(mocks.IHospitalRepo)
-	
 
 	svc := newStaffServiceWithMocks(mockStaffRepo, mockHospitalRepo)
 	engine, _ := setupGinContext(t)
@@ -548,7 +535,6 @@ func buildLoginRequest(username, password string) []byte {
 func TestLoginStaff_Success(t *testing.T) {
 	mockStaffRepo := new(mocks.IStaffRepo)
 	mockHospitalRepo := new(mocks.IHospitalRepo)
-	
 
 	// Setup expectations - staff found with correct password hash
 	password := "securepass123"
@@ -619,7 +605,6 @@ func TestLoginStaff_Success(t *testing.T) {
 func TestLoginStaff_InvalidJSON(t *testing.T) {
 	mockStaffRepo := new(mocks.IStaffRepo)
 	mockHospitalRepo := new(mocks.IHospitalRepo)
-	
 
 	svc := newStaffServiceWithMocks(mockStaffRepo, mockHospitalRepo)
 	engine, _ := setupGinContext(t)
@@ -650,7 +635,6 @@ func TestLoginStaff_InvalidJSON(t *testing.T) {
 func TestLoginStaff_MissingUsername(t *testing.T) {
 	mockStaffRepo := new(mocks.IStaffRepo)
 	mockHospitalRepo := new(mocks.IHospitalRepo)
-	
 
 	svc := newStaffServiceWithMocks(mockStaffRepo, mockHospitalRepo)
 	engine, _ := setupGinContext(t)
@@ -682,7 +666,6 @@ func TestLoginStaff_MissingUsername(t *testing.T) {
 func TestLoginStaff_InvalidUsernameLength(t *testing.T) {
 	mockStaffRepo := new(mocks.IStaffRepo)
 	mockHospitalRepo := new(mocks.IHospitalRepo)
-	
 
 	svc := newStaffServiceWithMocks(mockStaffRepo, mockHospitalRepo)
 	engine, _ := setupGinContext(t)
@@ -715,7 +698,6 @@ func TestLoginStaff_InvalidUsernameLength(t *testing.T) {
 func TestLoginStaff_MissingPassword(t *testing.T) {
 	mockStaffRepo := new(mocks.IStaffRepo)
 	mockHospitalRepo := new(mocks.IHospitalRepo)
-	
 
 	svc := newStaffServiceWithMocks(mockStaffRepo, mockHospitalRepo)
 	engine, _ := setupGinContext(t)
@@ -747,7 +729,6 @@ func TestLoginStaff_MissingPassword(t *testing.T) {
 func TestLoginStaff_InvalidPasswordLength(t *testing.T) {
 	mockStaffRepo := new(mocks.IStaffRepo)
 	mockHospitalRepo := new(mocks.IHospitalRepo)
-	
 
 	svc := newStaffServiceWithMocks(mockStaffRepo, mockHospitalRepo)
 	engine, _ := setupGinContext(t)
@@ -780,7 +761,6 @@ func TestLoginStaff_InvalidPasswordLength(t *testing.T) {
 func TestLoginStaff_EmptyRequest(t *testing.T) {
 	mockStaffRepo := new(mocks.IStaffRepo)
 	mockHospitalRepo := new(mocks.IHospitalRepo)
-	
 
 	svc := newStaffServiceWithMocks(mockStaffRepo, mockHospitalRepo)
 	engine, _ := setupGinContext(t)
@@ -811,7 +791,6 @@ func TestLoginStaff_EmptyRequest(t *testing.T) {
 func TestLoginStaff_UserNotFound(t *testing.T) {
 	mockStaffRepo := new(mocks.IStaffRepo)
 	mockHospitalRepo := new(mocks.IHospitalRepo)
-	
 
 	// Setup expectations - user not found
 	mockStaffRepo.On("GetByUsername", "nonexistent").
@@ -854,7 +833,6 @@ func TestLoginStaff_UserNotFound(t *testing.T) {
 func TestLoginStaff_InvalidPassword(t *testing.T) {
 	mockStaffRepo := new(mocks.IStaffRepo)
 	mockHospitalRepo := new(mocks.IHospitalRepo)
-	
 
 	// Setup expectations - user found but password doesn't match
 	password := "securepass123"
@@ -905,7 +883,6 @@ func TestLoginStaff_InvalidPassword(t *testing.T) {
 func TestLoginStaff_DatabaseError(t *testing.T) {
 	mockStaffRepo := new(mocks.IStaffRepo)
 	mockHospitalRepo := new(mocks.IHospitalRepo)
-	
 
 	// Setup expectations - database error
 	mockStaffRepo.On("GetByUsername", "john_doe").

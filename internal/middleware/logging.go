@@ -83,7 +83,6 @@ func logResponse(c *gin.Context, writer *responseBodyWriter, requestID string, d
 	statusCode := c.Writer.Status()
 	path := c.Request.URL.Path
 
-
 	logger.InfofWithContext(
 		c.Request.Context(),
 		"response sent: path=%s, status=%d, duration=%dms",

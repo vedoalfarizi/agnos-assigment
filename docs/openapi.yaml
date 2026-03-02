@@ -1,0 +1,561 @@
+openapi: 3.0.0
+info:
+  title: Hospital API
+  description: REST API for hospital staff to search patient records with hospital-level access control and JWT authentication
+  version: 1.0.0
+  contact:
+    name: Development Team
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:8080
+    description: Local development
+  - url: http://localhost/api
+    description: Production (via Nginx)
+
+paths:
+  /api/health:
+    get:
+      summary: Health Check
+      description: Returns the health status of the API and its dependencies
+      operationId: getHealth
+      tags:
+        - System
+      responses:
+        '200':
+          description: System is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheckResponse'
+              example:
+                request_id: "req-12345"
+                success: true
+                data:
+                  status: healthy
+                  server: up
+                  database: up
+        '503':
+          description: System unhealthy (database down)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheckResponse'
+              example:
+                request_id: "req-12345"
+                success: false
+                data:
+                  status: unhealthy
+                  server: up
+                  database: down
+                error:
+                  code: SERVICE_UNAVAILABLE
+                  message: Database connection failed
+
+  /api/staff/create:
+    post:
+      summary: Create Staff Member
+      description: Register a new staff member for a hospital. Staff can then use credentials to login.
+      operationId: createStaff
+      tags:
+        - Staff
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StaffCreateRequest'
+            example:
+              username: "doctor_john"
+              password: "secure_password_123"
+              hospital_id: 1
+      responses:
+        '200':
+          description: Staff member created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIResponse'
+              example:
+                request_id: "req-12345"
+                success: true
+                data:
+                  id: 1
+                  username: "doctor_john"
+                  hospital_id: 1
+        '400':
+          description: Invalid request or validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid_format:
+                  value:
+                    request_id: "req-12345"
+                    success: false
+                    error:
+                      code: "INVALID_REQUEST"
+                      message: "Invalid request format"
+                validation_error:
+                  value:
+                    request_id: "req-12345"
+                    success: false
+                    error:
+                      code: "VALIDATION_ERROR"
+                      message: "Validation failed: username must be min 3 characters"
+        '404':
+          description: Hospital not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                request_id: "req-12345"
+                success: false
+                error:
+                  code: "HOSPITAL_NOT_FOUND"
+                  message: "Hospital not found"
+        '409':
+          description: Username already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                request_id: "req-12345"
+                success: false
+                error:
+                  code: "DUPLICATE_USERNAME"
+                  message: "Username already exists"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/staff/login:
+    post:
+      summary: Staff Login
+      description: Authenticate staff member and receive JWT access token
+      operationId: loginStaff
+      tags:
+        - Staff
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StaffLoginRequest'
+            example:
+              username: "doctor_john"
+              password: "secure_password_123"
+      responses:
+        '200':
+          description: Login successful, JWT token provided
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIResponse'
+              example:
+                request_id: "req-12345"
+                success: true
+                data:
+                  access_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  token_type: "Bearer"
+                  expires_in: 86400
+        '400':
+          description: Invalid request or validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                request_id: "req-12345"
+                success: false
+                error:
+                  code: "UNAUTHORIZED"
+                  message: "Invalid username or password"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/patient/search/{id}:
+    get:
+      summary: Search Patient by ID
+      description: |
+        Public endpoint to search for a single patient by national ID or passport ID.
+        No authentication required.
+      operationId: searchPatientById
+      tags:
+        - Patient
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: National ID or Passport ID of the patient
+          schema:
+            type: string
+          example: "1234567890123"
+      responses:
+        '200':
+          description: Patient found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIResponse'
+              example:
+                request_id: "req-12345"
+                success: true
+                data:
+                  first_name_th: "สมชาย"
+                  middle_name_th: null
+                  last_name_th: "ใจดี"
+                  first_name_en: "Somchai"
+                  middle_name_en: null
+                  last_name_en: "Jaidee"
+                  date_of_birth: "1990-05-15"
+                  patient_hn: "HN001"
+                  national_id: "1234567890123"
+                  passport_id: null
+                  phone_number: "085-123-4567"
+                  email: "somchai@example.com"
+                  gender: "M"
+        '404':
+          description: Patient not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                request_id: "req-12345"
+                success: false
+                error:
+                  code: "PATIENT_NOT_FOUND"
+                  message: "Patient not found"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/patient/search:
+    get:
+      summary: Search Patients
+      description: |
+        Authenticated endpoint to search for patients within authenticated staff's hospital.
+        Staff can only access patients from their own hospital.
+        All query parameters are optional filters (case-insensitive substring match for names, exact match for IDs).
+      operationId: searchPatients
+      tags:
+        - Patient
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: national_id
+          in: query
+          description: Exact match on national ID
+          schema:
+            type: string
+          example: "1234567890123"
+        - name: passport_id
+          in: query
+          description: Exact match on passport ID
+          schema:
+            type: string
+          example: "AB123456"
+        - name: first_name
+          in: query
+          description: Substring match on first name (case-insensitive)
+          schema:
+            type: string
+          example: "John"
+        - name: middle_name
+          in: query
+          description: Substring match on middle name (case-insensitive)
+          schema:
+            type: string
+          example: "Michael"
+        - name: last_name
+          in: query
+          description: Substring match on last name (case-insensitive)
+          schema:
+            type: string
+          example: "Doe"
+        - name: date_of_birth
+          in: query
+          description: Exact match on date of birth (format YYYY-MM-DD)
+          schema:
+            type: string
+          example: "1990-05-15"
+        - name: phone_number
+          in: query
+          description: Substring match on phone number
+          schema:
+            type: string
+          example: "085"
+        - name: email
+          in: query
+          description: Substring match on email (case-insensitive)
+          schema:
+            type: string
+          example: "example.com"
+      responses:
+        '200':
+          description: Search results (may be empty array)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIResponse'
+              example:
+                request_id: "req-12345"
+                success: true
+                data:
+                  - id: 1
+                    hospital_id: 1
+                    first_name_en: "Somchai"
+                    middle_name_en: null
+                    last_name_en: "Jaidee"
+                    first_name_th: "สมชาย"
+                    middle_name_th: null
+                    last_name_th: "ใจดี"
+                    national_id: "1234567890123"
+                    passport_id: null
+                    phone_number: "085-123-4567"
+                    email: "somchai@example.com"
+                    date_of_birth: "1990-05-15T00:00:00Z"
+        '400':
+          description: Invalid query parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Missing or invalid JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                request_id: "req-12345"
+                success: false
+                error:
+                  code: "UNAUTHORIZED"
+                  message: "Missing or invalid authorization token"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    APIResponse:
+      type: object
+      required:
+        - request_id
+        - success
+      properties:
+        request_id:
+          type: string
+          description: Unique request identifier for tracing
+          example: "uuid-12345"
+        success:
+          type: boolean
+          description: Whether the request was successful
+        data:
+          type: object
+          description: Response data (present only on success)
+        error:
+          $ref: '#/components/schemas/ErrorInfo'
+          description: Error details (present only on failure)
+
+    HealthCheckResponse:
+      type: object
+      required:
+        - status
+        - server
+        - database
+      properties:
+        status:
+          type: string
+          enum: [healthy, unhealthy]
+          description: Overall health status
+        server:
+          type: string
+          enum: [up, down]
+          description: API server status
+        database:
+          type: string
+          enum: [up, down]
+          description: Database connectivity status
+
+    StaffCreateRequest:
+      type: object
+      required:
+        - username
+        - password
+        - hospital_id
+      properties:
+        username:
+          type: string
+          minLength: 3
+          description: Staff member username (minimum 3 characters)
+          example: "doctor_john"
+        password:
+          type: string
+          minLength: 8
+          description: Staff member password (minimum 8 characters)
+          example: "secure_password_123"
+        hospital_id:
+          type: integer
+          minimum: 1
+          description: Hospital ID the staff member belongs to
+          example: 1
+
+    StaffLoginRequest:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          minLength: 3
+          description: Staff member username
+          example: "doctor_john"
+        password:
+          type: string
+          minLength: 8
+          description: Staff member password
+          example: "secure_password_123"
+
+    StaffLoginResponse:
+      type: object
+      required:
+        - access_token
+        - token_type
+        - expires_in
+      properties:
+        access_token:
+          type: string
+          description: JWT token for authentication
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        token_type:
+          type: string
+          enum: [Bearer]
+          description: Token type
+        expires_in:
+          type: integer
+          description: Token expiration time in seconds
+          example: 86400
+
+    PatientResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Patient ID
+        hospital_id:
+          type: integer
+          description: Hospital ID
+        first_name_en:
+          type: string
+          nullable: true
+          description: First name (English)
+        middle_name_en:
+          type: string
+          nullable: true
+          description: Middle name (English)
+        last_name_en:
+          type: string
+          nullable: true
+          description: Last name (English)
+        first_name_th:
+          type: string
+          nullable: true
+          description: First name (Thai)
+        middle_name_th:
+          type: string
+          nullable: true
+          description: Middle name (Thai)
+        last_name_th:
+          type: string
+          nullable: true
+          description: Last name (Thai)
+        national_id:
+          type: string
+          nullable: true
+          description: National ID number
+        passport_id:
+          type: string
+          nullable: true
+          description: Passport ID number
+        phone_number:
+          type: string
+          nullable: true
+          description: Phone number
+        email:
+          type: string
+          nullable: true
+          description: Email address
+        date_of_birth:
+          type: string
+          format: date-time
+          nullable: true
+          description: Date of birth (ISO 8601)
+        patient_hn:
+          type: string
+          nullable: true
+          description: Hospital number (HN)
+        gender:
+          type: string
+          nullable: true
+          enum: [M, F, Other]
+          description: Gender (only present in public lookup)
+
+    ErrorInfo:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: Error code for programmatic handling
+          example: "INVALID_REQUEST"
+        message:
+          type: string
+          description: Human-readable error message
+          example: "Invalid request format"
+
+    ErrorResponse:
+      allOf:
+        - $ref: '#/components/schemas/APIResponse'
+        - type: object
+          properties:
+            success:
+              type: boolean
+              enum: [false]
+            error:
+              $ref: '#/components/schemas/ErrorInfo'
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT Bearer token obtained from /api/staff/login

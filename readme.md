@@ -157,7 +157,10 @@ docker-compose ps              # List running services
 ### Health
 - `GET /api/health` — Unauthenticated health check
 
-Full API documentation available in [docs/techdoc.md](docs/techdoc.md#7-handler--dtos).
+**Full API Documentation:**
+- **OpenAPI Specification**: [docs/openapi.yaml](docs/openapi.yaml) — Machine-readable API schema (view with [Swagger Editor](https://editor.swagger.io/) or [ReDoc](https://redocly.github.io/redoc/))
+- **Postman Collection**: [docs/Agnos Health.postman_collection.json](docs/Agnos%20Health.postman_collection.json) — Ready-to-import collection for testing
+- **Architecture Guide**: [docs/techdoc.md](docs/techdoc.md) — Detailed technical documentation
 
 ---
 
